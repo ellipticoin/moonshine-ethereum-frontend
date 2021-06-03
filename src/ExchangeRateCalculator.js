@@ -53,7 +53,7 @@ export default class ExchangeRateCalculator {
 
   getSellOutputAmount(inputAmount) {
     const { baseTokenBalance, tokenBalance } = this.pools.find(
-      ({ token }) => token === this.outputToken
+      ({ token }) => token === this.inputToken
     );
     return this.calculateOutputAmount(
       tokenBalance,

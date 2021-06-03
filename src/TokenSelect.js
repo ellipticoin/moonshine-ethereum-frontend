@@ -1,7 +1,6 @@
 import { components as reactSelectComponents } from "react-select";
 import AsyncSelect from "react-select/async";
 import { PROD, BASE_TOKEN_ADDRESS } from "./constants";
-import {usePools} from "./helpers"
 import developmentTokenList from "./developmentTokenList.json";
 import React, { Component } from "react";
 
@@ -50,7 +49,13 @@ export default class WithPromises extends Component {
             tokenOptions(inputValue, includeBaseToken, pools)
           }
           components={{ Option: IconOption, SingleValue: IconSingleValue }}
-          isOptionDisabled={option => !pools.some((pool) => (pool.token === option.value) || option.value === BASE_TOKEN_ADDRESS)}
+          isOptionDisabled={(option) =>
+            !pools.some(
+              (pool) =>
+                pool.token === option.value ||
+                option.value === BASE_TOKEN_ADDRESS
+            )
+          }
           styles={styles}
         />
       </div>

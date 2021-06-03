@@ -8,12 +8,13 @@ const {
 test("ExchangeRateCalculator#getOutputAmount", () => {
   const exchangeRateCalculator = new ExchangeRateCalculator({
     baseToken: "USD",
-    pools: {
-      APPLES: {
+    pools: [
+      {
+        token: "APPLES",
         baseTokenBalance: parseUnits("100"),
         tokenBalance: parseUnits("100"),
       },
-    },
+    ],
     inputToken: "USD",
     outputToken: "APPLES",
   });

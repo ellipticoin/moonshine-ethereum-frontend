@@ -1,26 +1,54 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
+import { CHAIN_ID } from "./constants";
 import ERC20JSON from "@openzeppelin/contracts/build/contracts/ERC20";
 
 const { hexlify, parseUnits } = ethers.utils;
 
+export function useMetaMaskIsConnected() {
+  const [ethereumAccountsLoading, ethereumAcccounts] = useEthereumAccounts();
+  const [ethereumChainIdLoading, ethereumChainId] = useEthereumChainId();
+  return [
+    ethereumAccountsLoading || ethereumChainIdLoading,
+    ethereumAcccounts &&
+      ethereumAcccounts.length > 0 &&
+      ethereumChainId === CHAIN_ID,
+  ];
+}
+
+export function useEthereumChainId() {
+  const [ethereumChainId, setEthereumChainId] = useState([true]);
+  // const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    async function fetchEthereumChainId() {
+      if (window.ethereum) {
+        setEthereumChainId([
+          false,
+          await window.ethereum.request({ method: "eth_chainId" }),
+        ]);
+      }
+    }
+    fetchEthereumChainId();
+    window.ethereum.on("chainChanged", fetchEthereumChainId);
+  }, []);
+  return ethereumChainId;
+}
+
 export function useEthereumAccounts() {
-  const [ethereumAccounts, setEthereumAccounts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [ethereumAccounts, setEthereumAccounts] = useState([true]);
   useEffect(() => {
     async function fetchEthereumAccounts() {
       if (window.ethereum) {
-        setEthereumAccounts(
-          await window.ethereum.request({ method: "eth_accounts" })
-        );
-        window.ethereum.on("accountsChanged", setEthereumAccounts);
+        setEthereumAccounts([
+          false,
+          await window.ethereum.request({ method: "eth_accounts" }),
+        ]);
       }
-
-      setLoading(false);
     }
     fetchEthereumAccounts();
+    window.ethereum.on("accountsChanged", fetchEthereumAccounts);
   }, []);
-  return [loading, ethereumAccounts];
+  return ethereumAccounts;
 }
 
 export async function sendETH({ to, value }) {

@@ -1,0 +1,104 @@
+$colorSuccess: #1dcc70;
+html {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  /* background: #70bg32; */
+  background-repeat: no-repeat;
+  background: radial-gradient(#7baafd 10%, #2362d1 100%);
+}
+
+@mixin buttonStyle($color) {
+  &.disabled,
+  &:disabled {
+    background: #1dcc70;
+    border-color: #1dcc70;
+    opacity: 0.5;
+  }
+
+  &:focus {
+    box-shadow: 0 0 3pt 2pt lighten(#1dcc70, 20);
+  }
+
+  border: 0;
+  background-size: 100%;
+  background-image: linear-gradient(
+    -225deg,
+    darken(#1dcc70, 5),
+    lighten(#1dcc70, 10)
+  );
+  position: relative;
+  z-index: 2;
+
+  &:before {
+    border-radius: inherit;
+    background-image: linear-gradient(
+      -45deg,
+      darken(#1dcc70, 5),
+      lighten(#1dcc70, 10)
+    );
+    content: "";
+    display: block;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    width: 100%;
+    z-index: -1;
+    transition: opacity 0.4s ease-in-out;
+  }
+
+  &:hover:before {
+    opacity: 1;
+  }
+}
+
+.btn-success {
+  @include buttonStyle($colorSuccess);
+}
+
+nav {
+  border-bottom: 1px solid #fff;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+.jumbotron.vertical-center {
+  margin-bottom: 0; /* Remove the default bottom margin of .jumbotron */
+}
+
+.vertical-center {
+  min-height: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  border-radius: 10px;
+  background-color: #fff;
+}
+
+.navbar {
+  background: none;
+}

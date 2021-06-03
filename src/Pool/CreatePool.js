@@ -1,22 +1,20 @@
-import TokenSelect from "./TokenSelect";
-import TokenAmountInput from "./TokenAmountInput";
+import TokenAmountInput from "../TokenAmountInput";
 import { useState, useEffect, useMemo } from "react";
 import {
   ROUTER_ADDRESS,
   BASE_TOKEN_ADDRESS,
   BASE_TOKEN_DECIMALS,
-} from "./constants";
+} from "../constants";
 import ERC20JSON from "@openzeppelin/contracts/build/contracts/ERC20";
-import RouterJSON from "./Router.json";
+import RouterJSON from "../Router.json";
 import { ethers, BigNumber } from "ethers";
 const {
   utils: { formatUnits, parseUnits },
   constants: { WeiPerEther, MaxUint256 },
 } = ethers;
 
-export default function Pool(props) {
-  const { address } = props;
-  const [token, setToken] = useState();
+export default function CreatePool(props) {
+  const { address, token } = props;
   const [decimals, setDecimals] = useState();
   const [initialTokenAmount, setInitialTokenAmount] = useState();
   const [initialPrice, setInitialPrice] = useState();
@@ -141,17 +139,7 @@ export default function Pool(props) {
   };
 
   return (
-    <form className="d-flex  flex-column">
-      <div className="row mb-2">
-        <div className="col">
-          <TokenSelect
-            value={token}
-            onChange={(token) => setToken(token)}
-            placeholder="Token"
-            includeBaseToken={false}
-          />
-        </div>
-      </div>
+    <>
       <div className="row mb-2">
         <div className="col">
           <div className="form-floating mb-3">
@@ -202,7 +190,7 @@ export default function Pool(props) {
         >
           <div className="d-flex">
             <img
-              className="mt-3 mb-0"
+              className="mt-1 mb-0"
               src={
                 "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png"
               }
@@ -214,7 +202,7 @@ export default function Pool(props) {
               }}
               alt={"USDc"}
             />
-            <h4 className="mb-0 mt-3">USDc to Add</h4>
+            <h4 className="mb-0 mt-1">USDc to Add</h4>
           </div>
           <div>
             {tokenBalance && (
@@ -248,10 +236,9 @@ export default function Pool(props) {
           baseTokenRequiresApproval={baseTokenRequiresApproval}
         />
       </div>
-    </form>
+    </>
   );
 }
-
 function SubmitButton(props) {
   const {
     createPool,

@@ -4,12 +4,14 @@ import TokenSelect from "./TokenSelect";
 import TokenAmountInput from "./TokenAmountInput";
 import { useState } from "react";
 import { ethers } from "ethers";
+import { usePools } from "./helpers";
 
 export default function Mint() {
   const [token, setToken] = useState();
   const [value, setValue] = useState(0n);
   const [loading, setLoading] = useState(false);
   const inputAmountRef = useRef(null);
+  const pools = usePools();
   const mint = async () => {
     setLoading(true);
     const signer = new ethers.providers.Web3Provider(
@@ -36,6 +38,7 @@ export default function Mint() {
         <div className="col">
           <TokenSelect
             value={token}
+            pools={pools}
             onChange={(token) => setToken(token)}
             size={4000}
             placeholder="Token To Mint"

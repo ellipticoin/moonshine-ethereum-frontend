@@ -7,7 +7,7 @@ import { ethers } from "ethers";
 export function usePool(token) {
   const pools = usePools();
   if (!token) return;
-  return pools.filter((pool) => pool.token === token)[0];
+  return pools.filter((pool) => pool.token === token.value)[0];
 }
 
 export function usePools() {

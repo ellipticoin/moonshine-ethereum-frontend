@@ -1,15 +1,29 @@
 import "./App.css";
 import logo from "./logo.svg";
 import { PROD } from "./constants";
-import { useEthereumAccounts, ethRequestAccounts } from "./ethereum";
+import {
+  useEthereumAccounts,
+  ethRequestAccounts,
+  useMetaMaskIsConnected,
+} from "./ethereum";
 import Convert from "./Convert";
+import Toast from "./Toast";
 import Mint from "./Mint";
-import Pool from "./Pool";
+import UnlockMetaMask from "./UnlockMetaMask";
+import Pool from "./Pool/index";
+import UserAddress from "./UserAddress";
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
+import { useState } from "react";
 
 function App() {
   const [, ethereumAcccounts] = useEthereumAccounts();
-  const metamaskUnlocked = ethereumAcccounts && ethereumAcccounts.length > 0;
+  const [transactions, setTransactions] = useState([]);
+  const [metamaskIsConnectedLoading, metamaskIsConnected] =
+    useMetaMaskIsConnected();
+
+  const pushTransaction = (transaction) => {
+    setTransactions([...transactions, transaction]);
+  };
   return (
     <Router>
       <nav className="navbar navbar-expand-lg navbar-dark">
@@ -50,42 +64,69 @@ function App() {
               <li className="nav-item"></li>
             </ul>
           </div>
-          <form className="d-flex">
-            {metamaskUnlocked ? (
-              ethereumAcccounts.map((ethereumAcccount, i) => (
-                <div key={i} className="text-light">
-                  Connected as: {ethereumAcccount}
-                </div>
-              ))
-            ) : (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  ethRequestAccounts();
-                }}
-                className="btn btn-light"
-                type="submit"
-              >
-                Connect To MetaMask
-              </button>
-            )}
-          </form>
+          <UserAddress
+            metamaskIsConnected={metamaskIsConnected}
+            ethereumAcccounts={ethereumAcccounts}
+            ethRequestAccounts={ethRequestAccounts}
+          />
         </div>
       </nav>
+
+      <div
+        aria-live="polite"
+        aria-atomic="true"
+        className="bg-dark position-relative bd-example-toasts"
+      >
+        <div
+          className="toast-container position-absolute p-3 w-100"
+          id="toastPlacement"
+        >
+          {transactions.map((transaction, i) => (
+            <Toast key={i}>
+              <div>{transaction.text}</div>
+              <div>
+                <a
+                  href={`https://explorer5.arbitrum.io/#/tx/${transaction.hash}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View Transaction
+                </a>
+              </div>
+            </Toast>
+          ))}
+        </div>
+      </div>
       <div>
         <div className="jumbotron vertical-center">
           <div className="container p-3">
-            <Switch>
-              <Route path="/mint">
-                <Mint />
-              </Route>
-              <Route path="/pool">
-                <Pool address={ethereumAcccounts[0]} />
-              </Route>
-              <Route path="/">
-                <Convert address={ethereumAcccounts[0]} />
-              </Route>
-            </Switch>
+            {metamaskIsConnectedLoading ? (
+              <div
+                className="d-flex align-items-center justify-content-center"
+                style={{ height: "236px" }}
+              >
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            ) : metamaskIsConnected ? (
+              <Switch>
+                <Route path="/mint">
+                  <Mint />
+                </Route>
+                <Route path="/pool">
+                  <Pool address={ethereumAcccounts[0]} />
+                </Route>
+                <Route path="/">
+                  <Convert
+                    address={ethereumAcccounts[0]}
+                    pushTransaction={pushTransaction}
+                  />
+                </Route>
+              </Switch>
+            ) : (
+              <UnlockMetaMask />
+            )}
           </div>
         </div>
       </div>
