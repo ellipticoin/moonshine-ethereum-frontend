@@ -11,6 +11,8 @@ import Toast from "./Toast";
 import Mint from "./Mint";
 import UnlockMetaMask from "./UnlockMetaMask";
 import Pool from "./Pool/index";
+import Drip from "./Drip";
+import Bridge from "./Bridge";
 import UserAddress from "./UserAddress";
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import { useState } from "react";
@@ -54,6 +56,11 @@ function App() {
                   Pool
                 </Link>
               </li>
+              <li className="nav-item">
+                <Link className="nav-link" to="/bridge">
+                  Bridge
+                </Link>
+              </li>
               {!PROD && (
                 <li className="nav-item">
                   <Link className="nav-link" to="/mint">
@@ -66,7 +73,7 @@ function App() {
           </div>
           <UserAddress
             metamaskIsConnected={metamaskIsConnected}
-            ethereumAcccounts={ethereumAcccounts}
+            address={metamaskIsConnected && ethereumAcccounts[0]}
             ethRequestAccounts={ethRequestAccounts}
           />
         </div>
@@ -86,7 +93,7 @@ function App() {
               <div>{transaction.text}</div>
               <div>
                 <a
-                  href={`https://explorer5.arbitrum.io/#/tx/${transaction.hash}`}
+                  href={`https://rinkeby-arb-explorer.netlify.app/tx/${transaction.hash}`}
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -112,10 +119,16 @@ function App() {
             ) : metamaskIsConnected ? (
               <Switch>
                 <Route path="/mint">
-                  <Mint />
+                  <Mint address={ethereumAcccounts[0]} />
                 </Route>
                 <Route path="/pool">
                   <Pool address={ethereumAcccounts[0]} />
+                </Route>
+                <Route path="/bridge">
+                  <Bridge address={ethereumAcccounts[0]} />
+                </Route>
+                <Route path="/drip">
+                  <Drip address={ethereumAcccounts[0]} />
                 </Route>
                 <Route path="/">
                   <Convert

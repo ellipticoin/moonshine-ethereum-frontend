@@ -1,54 +1,54 @@
-import { forwardRef, useState, useEffect } from "react";
+import { forwardRef } from "react";
 import { ethers } from "ethers";
-import { BASE_TOKEN_ADDRESS, BASE_TOKEN_DECIMALS } from "./constants";
-import ERC20JSON from "@openzeppelin/contracts/build/contracts/ERC20";
+import { useQueryEth, useTokenBalance } from "./ethereum.js";
+import { ERC20 } from "./contracts";
 import Cleave from "cleave.js/react";
 const {
   utils: { parseUnits },
 } = ethers;
 
 export default forwardRef((props, ref) => {
-  const { onChange, tokenAddress, options } = props;
-  const [decimals, setDecimals] = useState();
-  useEffect(() => {
-    async function fetchDecimals() {
-      if (!tokenAddress) return;
-      const signer = new ethers.providers.Web3Provider(
-        window.ethereum
-      ).getSigner();
-      const tokenContract = new ethers.Contract(
-        tokenAddress,
-        ERC20JSON.abi,
-        signer
-      );
-      const decimals = await tokenContract.decimals();
-      setDecimals(decimals);
-    }
-    if (tokenAddress === BASE_TOKEN_ADDRESS) {
-      setDecimals(BASE_TOKEN_DECIMALS);
-    } else {
-      fetchDecimals();
-    }
-  }, [setDecimals, tokenAddress]);
+  const { onChange, address, token, options, label } = props;
+  const decimals = useQueryEth(async () => {
+    return token && ERC20.attach(token.address).decimals();
+  }, [token]);
+  const inputBalance = useTokenBalance(token, address);
+  // const decimals = 6
+  // const inputBalance = "0"
+
   return (
-    <Cleave
-      className="form-control"
-      ref={ref}
-      placeholder="0.0"
-      options={{
-        ...options,
-        numeral: true,
-        numeralDecimalScale: 18,
-        numeralThousandsGroupStyle: "thousand",
-      }}
-      onChange={(event) => {
-        onChange(
-          event.target.rawValue === ""
-            ? null
-            : parseUnits(event.target.rawValue.replace(/^\./g, "0."), decimals)
-        );
-      }}
-    ></Cleave>
+    <div className="form-floating mb-3">
+      {inputBalance && (
+        <small
+          style={{ right: "10px", top: "7px", position: "absolute" }}
+          className="balance"
+        >
+          <strong>Balance: {inputBalance}</strong>
+        </small>
+      )}
+      <Cleave
+        className="form-control"
+        ref={ref}
+        placeholder="0.0"
+        options={{
+          ...options,
+          numeral: true,
+          numeralDecimalScale: 18,
+          numeralThousandsGroupStyle: "thousand",
+        }}
+        onChange={(event) => {
+          onChange(
+            event.target.rawValue === ""
+              ? null
+              : parseUnits(
+                  event.target.rawValue.replace(/^\./g, "0."),
+                  decimals
+                )
+          );
+        }}
+      ></Cleave>
+      <label htmlFor="inputAmount">{label}</label>
+    </div>
   );
 });
 // };

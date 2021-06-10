@@ -1,13 +1,12 @@
 import TokenAmountInput from "../TokenAmountInput";
 import { useState, useEffect, useMemo } from "react";
-import {
-  ROUTER_ADDRESS,
-  BASE_TOKEN_ADDRESS,
-  BASE_TOKEN_DECIMALS,
-} from "../constants";
+import { BASE_TOKEN_DECIMALS } from "../constants";
+import { ERC20 } from "../contracts";
 import ERC20JSON from "@openzeppelin/contracts/build/contracts/ERC20";
-import RouterJSON from "../Router.json";
 import { ethers, BigNumber } from "ethers";
+import { useBaseTokenAddress, useRouter } from "../contracts";
+import Button from "../Button";
+
 const {
   utils: { formatUnits, parseUnits },
   constants: { WeiPerEther, MaxUint256 },
@@ -16,54 +15,58 @@ const {
 export default function CreatePool(props) {
   const { address, token } = props;
   const [decimals, setDecimals] = useState();
-  const [initialTokenAmount, setInitialTokenAmount] = useState();
-  const [initialPrice, setInitialPrice] = useState();
+  const [initialTokenAmount, setInitialTokenAmount] = useState(null);
+  const [initialPrice, setInitialPrice] = useState(null);
   const [tokenBalance, setTokenBalance] = useState();
   const [baseTokenBalance, setBaseTokenBalance] = useState();
   const [loading, setLoading] = useState(false);
-  const [tokenAllowance, setTokenAllowance] = useState(BigNumber.from(0));
-  const [baseTokenAllowance, setBaseTokenAllowance] = useState(
-    BigNumber.from(0)
-  );
+  const [tokenAllowance, setTokenAllowance] = useState();
+  const [baseTokenAllowance, setBaseTokenAllowance] = useState();
+  const baseTokenAddress = useBaseTokenAddress();
+  const router = useRouter();
 
   useEffect(() => {
+    let isCancelled = false;
     async function fetchTokenData() {
       if (!token) return;
       const signer = new ethers.providers.Web3Provider(
         window.ethereum
       ).getSigner();
       const tokenContract = new ethers.Contract(
-        token.value,
-        ERC20JSON.abi,
-        signer
-      );
-      const baseTokenContract = new ethers.Contract(
-        BASE_TOKEN_ADDRESS,
+        token.address,
         ERC20JSON.abi,
         signer
       );
       const decimals = await tokenContract.decimals();
-      setBaseTokenBalance(
-        BigInt((await baseTokenContract.balanceOf(address)).toString())
+      const baseTokenBalance = BigInt(
+        (await ERC20.attach(baseTokenAddress).balanceOf(address)).toString()
       );
-      setTokenBalance(
-        BigInt((await tokenContract.balanceOf(address)).toString())
+      const tokenBalance = BigInt(
+        (await tokenContract.balanceOf(address)).toString()
       );
-      setTokenAllowance(
-        BigInt(
-          (await tokenContract.allowance(address, ROUTER_ADDRESS)).toString()
-        )
+      const tokenAllowance = BigInt(
+        (await tokenContract.allowance(address, router.address)).toString()
       );
-      setBaseTokenAllowance(
-        BigInt(
-          (
-            await baseTokenContract.allowance(address, ROUTER_ADDRESS)
-          ).toString()
-        )
+      const baseTokenAllowance = BigInt(
+        (
+          await ERC20.attach(baseTokenAddress).allowance(
+            address,
+            router.address
+          )
+        ).toString()
       );
-      setDecimals(decimals);
+      if (!isCancelled) {
+        setBaseTokenBalance(baseTokenBalance);
+        setTokenBalance(tokenBalance);
+        setTokenAllowance(tokenAllowance);
+        setBaseTokenAllowance(baseTokenAllowance);
+        setDecimals(decimals);
+      }
     }
     fetchTokenData();
+    return () => {
+      isCancelled = true;
+    };
   });
   const tokenRequiresApproval = useMemo(
     () => tokenAllowance < initialTokenAmount,
@@ -88,15 +91,10 @@ export default function CreatePool(props) {
 
   const approveBaseToken = async () => {
     setLoading(true);
-    const signer = new ethers.providers.Web3Provider(
-      window.ethereum
-    ).getSigner();
-    const baseTokenContract = new ethers.Contract(
-      BASE_TOKEN_ADDRESS,
-      ERC20JSON.abi,
-      signer
+    const tx = await ERC20.attach(baseTokenAddress).approve(
+      router.address,
+      MaxUint256
     );
-    const tx = await baseTokenContract.approve(ROUTER_ADDRESS, MaxUint256);
     await tx.wait();
     setLoading(false);
   };
@@ -106,28 +104,16 @@ export default function CreatePool(props) {
     const signer = new ethers.providers.Web3Provider(
       window.ethereum
     ).getSigner();
-    const tokenContract = new ethers.Contract(
-      token.value,
-      ERC20JSON.abi,
-      signer
-    );
-    const tx = await tokenContract.approve(ROUTER_ADDRESS, MaxUint256);
+    const tokenContract = new ethers.Contract(token, ERC20JSON.abi, signer);
+    const tx = await tokenContract.approve(router.address, MaxUint256);
     await tx.wait();
     setLoading(false);
   };
 
   const createPool = async () => {
     setLoading(true);
-    const signer = new ethers.providers.Web3Provider(
-      window.ethereum
-    ).getSigner();
-    const routerContract = new ethers.Contract(
-      ROUTER_ADDRESS,
-      RouterJSON.abi,
-      signer
-    );
-    const tx = await routerContract.createPool(
-      token.value,
+    const tx = await router.createPool(
+      token,
       parseUnits("0.003"),
       initialBaseTokenAmount,
       initialTokenAmount,
@@ -137,50 +123,28 @@ export default function CreatePool(props) {
     await tx.wait();
     setLoading(false);
   };
-
   return (
     <>
       <div className="row mb-2">
         <div className="col">
-          <div className="form-floating mb-3">
-            {tokenBalance && (
-              <small
-                style={{ right: "10px", top: "7px", position: "absolute" }}
-                className="balance"
-              >
-                <strong>
-                  Balance:{" "}
-                  {formatUnits(
-                    BigNumber.from(tokenBalance.toString()),
-                    decimals
-                  )}
-                </strong>
-              </small>
-            )}
-            <TokenAmountInput
-              className="form-control"
-              id="inputAmount"
-              onChange={(initalTokenAmount) =>
-                setInitialTokenAmount(initalTokenAmount)
-              }
-              tokenAddress={token && token.value}
-              value={initialTokenAmount}
-            />
-            <label htmlFor="inputAmount">Initial Token Amount</label>
-          </div>
+          <TokenAmountInput
+            label="Initial Token Amount"
+            onChange={(initalTokenAmount) =>
+              setInitialTokenAmount(initalTokenAmount)
+            }
+            tokenAddress={token}
+            address={address}
+            value={initialTokenAmount}
+          />
         </div>
       </div>
       <div className="row mb-2">
         <div className="col">
-          <div className="form-floating mb-3">
-            <TokenAmountInput
-              className="form-control"
-              id="inputAmount"
-              onChange={(initialPrice) => setInitialPrice(initialPrice)}
-              value={initialPrice}
-            />
-            <label htmlFor="inputAmount">Initial Price</label>
-          </div>
+          <TokenAmountInput
+            label="Initial Price"
+            onChange={(initialPrice) => setInitialPrice(initialPrice)}
+            value={initialPrice}
+          />
         </div>
       </div>
       <div className="list-group mb-3 transaction-details">
@@ -239,6 +203,7 @@ export default function CreatePool(props) {
     </>
   );
 }
+
 function SubmitButton(props) {
   const {
     createPool,
@@ -282,19 +247,14 @@ function SubmitButton(props) {
     );
   } else {
     return (
-      <button
+      <Button
         onClick={() => createPool()}
         className="btn btn-primary"
         type="button"
+        loading={loading}
       >
-        {loading ? (
-          <div className="spinner-border text-light" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-        ) : (
-          "Create Pool"
-        )}
-      </button>
+        Create Pool
+      </Button>
     );
   }
 }

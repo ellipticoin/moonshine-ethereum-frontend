@@ -3,22 +3,13 @@ import { ethers } from "ethers";
 const {
   utils: { parseUnits },
 } = ethers;
-const DEFAULT_FEE = parseUnits("0.003");
+const DEFAULT_FEE = parseUnits("0.003").toBigInt();
 
 export default class ExchangeRateCalculator {
-  constructor({
-    fee = DEFAULT_FEE,
-    baseToken,
-    pools,
-    inputToken,
-    outputToken,
-    inputAmount,
-  }) {
+  constructor({ fee = DEFAULT_FEE, inputPool, outputPool, inputAmount }) {
     this.fee = fee;
-    this.baseToken = baseToken;
-    this.pools = pools;
-    this.inputToken = inputToken;
-    this.outputToken = outputToken;
+    this.inputPool = inputPool;
+    this.outputPool = outputPool;
   }
 
   getOutputAmount(inputAmount) {
@@ -41,9 +32,7 @@ export default class ExchangeRateCalculator {
   }
 
   getBuyOutputAmount(inputAmount) {
-    const { baseTokenBalance, tokenBalance } = this.pools.find(
-      ({ token }) => token === this.outputToken
-    );
+    const { baseTokenBalance, tokenBalance } = this.outputPool;
     return this.calculateOutputAmount(
       baseTokenBalance,
       tokenBalance,
@@ -52,9 +41,8 @@ export default class ExchangeRateCalculator {
   }
 
   getSellOutputAmount(inputAmount) {
-    const { baseTokenBalance, tokenBalance } = this.pools.find(
-      ({ token }) => token === this.inputToken
-    );
+    const { baseTokenBalance, tokenBalance } = this.inputPool;
+
     return this.calculateOutputAmount(
       tokenBalance,
       baseTokenBalance,
@@ -63,9 +51,9 @@ export default class ExchangeRateCalculator {
   }
 
   getAction() {
-    if (this.inputToken === this.baseToken) {
+    if (!this.inputPool.address) {
       return "buy";
-    } else if (this.outputToken === this.baseToken) {
+    } else if (!this.outputPool.address) {
       return "sell";
     } else {
       return "convert";
@@ -73,14 +61,15 @@ export default class ExchangeRateCalculator {
   }
 
   calculateOutputAmount(inputSupply, outputSupply, inputAmount) {
-    const invariant = inputSupply.mul(outputSupply);
-    const newOutputSupply = invariant.div(
-      inputSupply.add(inputAmount.sub(this.getFee(inputAmount)))
-    );
-    return outputSupply.sub(newOutputSupply);
+    if (inputSupply === 0n) return 0n;
+    const invariant = inputSupply * outputSupply;
+    const newOutputSupply =
+      invariant / (inputSupply + inputAmount - this.getFee(inputAmount));
+
+    return outputSupply - newOutputSupply;
   }
 
   getFee(amount) {
-    return amount.mul(this.fee).div(parseUnits("1"));
+    return (amount * this.fee) / parseUnits("1").toBigInt();
   }
 }

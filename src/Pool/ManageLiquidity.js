@@ -1,23 +1,14 @@
 import { Tab } from "bootstrap";
-import { useEffect, useRef, useState } from "react";
-import chaChing from "./chaching.wav";
+import { useEffect, useRef } from "react";
 import { ethers } from "ethers";
+import PendingYield from "./PendingYield";
 const {
   utils: { formatUnits },
 } = ethers;
 
 export default function ManageLiquidity(props) {
-   const {liquidityTokenBalance} = props
+  const { address, liquidityTokenBalance, pool } = props;
   const tabsEl = useRef(null);
-  const chaChingRef = useRef();
- const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCount(count + 1);
-    }, 1000);
-    return () => clearInterval(interval)
-  }, [count]);
 
   useEffect(() => {
     var triggerTabList = [].slice.call(
@@ -33,14 +24,11 @@ export default function ManageLiquidity(props) {
     });
   });
 
-  const harvest = async () => {
-    chaChingRef.current.currentTime = 0;
-    await chaChingRef.current.play();
-    setCount(0)
-  }
   return (
     <>
-      <h3 className="mb-4">Liquidity Tokens in Pool: {formatUnits(liquidityTokenBalance)}</h3>
+      <h3 className="mb-4">
+        Liquidity Tokens in Pool: {formatUnits(liquidityTokenBalance)}
+      </h3>
       <ul ref={tabsEl} className="nav nav-pills nav-fill">
         <li className="nav-item">
           <button
@@ -50,9 +38,6 @@ export default function ManageLiquidity(props) {
             href="/"
           >
             Harvest
-            <audio ref={chaChingRef} preload="true">
-              <source src={chaChing} />
-            </audio>
           </button>
         </li>
         <li className="nav-item">
@@ -75,24 +60,17 @@ export default function ManageLiquidity(props) {
           </button>
         </li>
       </ul>
-      <div class="tab-content">
+      <div className="tab-content">
         <div
-          class="tab-pane fade show active"
+          className="tab-pane fade show active"
           id="harvest"
           role="tabpanel"
           aria-labelledby="home-tab"
         >
-          <div className="list-group mb-3 mt-3 w-50">
-            <div className="list-group-item" aria-current="true">
-              <div className="d-flex w-100 justify-content-between">
-                <h4 className="mt-2">Moonshine Earned: {count}</h4>
-                <button onClick={(e) => {e.preventDefault(); harvest()}}className="btn btn-success btn-lg">Harvest</button>
-              </div>
-            </div>
-          </div>
+          <PendingYield address={address} pool={pool} />
         </div>
         <div
-          class="tab-pane fade"
+          className="tab-pane fade"
           id="add-liquidity"
           role="tabpanel"
           aria-labelledby="profile-tab"
@@ -100,7 +78,7 @@ export default function ManageLiquidity(props) {
           Add Liquidity
         </div>
         <div
-          class="tab-pane fade"
+          className="tab-pane fade"
           id="remove-liquidity"
           role="tabpanel"
           aria-labelledby="messages-tab"

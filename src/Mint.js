@@ -4,9 +4,10 @@ import TokenSelect from "./TokenSelect";
 import TokenAmountInput from "./TokenAmountInput";
 import { useState } from "react";
 import { ethers } from "ethers";
-import { usePools } from "./helpers";
+import { usePools } from "./contracts";
 
-export default function Mint() {
+export default function Mint(props) {
+  const { address } = props;
   const [token, setToken] = useState();
   const [value, setValue] = useState(0n);
   const [loading, setLoading] = useState(false);
@@ -18,14 +19,11 @@ export default function Mint() {
       window.ethereum
     ).getSigner();
     const tokenContract = new ethers.Contract(
-      token.value,
+      token.address,
       ["function mint(address account, uint256 amount)"],
       signer
     );
-    const tx = await tokenContract.mint(
-      "0xAdfe2B5BeAc83382C047d977db1df977FD9a7e41",
-      value
-    );
+    const tx = await tokenContract.mint(address, value);
     await tx.wait();
     setValue(0n);
     inputAmountRef.current.setRawValue("");
@@ -45,17 +43,14 @@ export default function Mint() {
           />
         </div>
         <div className="col">
-          <div className="form-floating mb-3">
-            <TokenAmountInput
-              className="form-control"
-              id="inputAmount"
-              ref={inputAmountRef}
-              tokenAddress={token && token.value}
-              onChange={(value) => setValue(value)}
-              value={value}
-            />
-            <label htmlFor="inputAmount">Amount To Mint</label>
-          </div>
+          <TokenAmountInput
+            label="Amount To Mint"
+            ref={inputAmountRef}
+            address={address}
+            token={token}
+            onChange={(value) => setValue(value)}
+            value={value}
+          />
         </div>
       </div>
       <div className="d-grid gap-2 mt-2">

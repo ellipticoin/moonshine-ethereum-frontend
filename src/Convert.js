@@ -1,99 +1,76 @@
 import TokenSelect from "./TokenSelect";
 import { ArrowDown } from "react-feather";
 import TokenAmountInput from "./TokenAmountInput";
-import { useState, useEffect, useRef } from "react";
+import RouterABI from "./abis/RouterABI.json";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { BASE_TOKEN_DECIMALS } from "./constants";
 import {
-  BASE_TOKEN_ADDRESS,
-  BASE_TOKEN_DECIMALS,
-  ROUTER_ADDRESS,
-} from "./constants";
+  ERC20,
+  useRouter,
+  useFeeSubsidyDripAddress,
+  useBestPool,
+} from "./contracts";
 import ExchangeRateCalculator from "./ExchangeRateCalculator";
-import { usePools, usePool } from "./helpers";
-import RouterJSON from "./Router.json";
-import ERC20JSON from "@openzeppelin/contracts/build/contracts/ERC20";
 import { ethers } from "ethers";
-import { Collapse } from "bootstrap";
+import { useCollapse } from "./react-bootstrap.js";
+import { useQueryEth, useChainId } from "./ethereum.js";
+import Button from "./Button";
+import { capitalize } from "lodash";
+
 const {
   utils: { formatUnits },
+  constants: { MaxUint256 },
 } = ethers;
+
 export default function Convert(props) {
   const { address, pushTransaction } = props;
   const [inputToken, setInputToken] = useState();
   const [outputToken, setOutputToken] = useState();
   const [inputAmount, setInputAmount] = useState(null);
-  const [inputDecimals, setInputDecimals] = useState();
-  const [inputBalance, setInputBalance] = useState();
-  const [outputBalance, setOutputBalance] = useState();
-  const [outputDecimals, setOutputDecimals] = useState();
   const [loading, setLoading] = useState(false);
   const [outputAmount, setOutputAmount] = useState();
   const [action, setAction] = useState();
   const transactionDetailsEl = useRef(null);
   const inputAmountRef = useRef(null);
-  const pools = usePools();
-  const inputPool = usePool(inputToken);
-  const outputPool = usePool(outputToken);
+  const router = useRouter();
+  const feeSubsidyDripAddress = useFeeSubsidyDripAddress();
+  const inputPool = useBestPool(inputToken && inputToken.address);
+  const outputPool = useBestPool(outputToken && outputToken.address);
+  const [, chainId] = useChainId();
+  const inputTokenAllowance = useQueryEth(async () => {
+    if (!router || !inputToken) return;
+    return ERC20.attach(inputToken.address).allowance(address, router.address);
+  }, [inputToken]);
+  const inputTokenRequiresApproval = useMemo(
+    () => inputTokenAllowance < inputAmount,
+    [inputTokenAllowance, inputAmount]
+  );
 
-  useEffect(() => {
-    let outputDecimals;
-
-    async function fetchTokenData() {
-      if (inputToken) {
-        const signer = new ethers.providers.Web3Provider(
-          window.ethereum
-        ).getSigner();
-        const inputTokenContract = new ethers.Contract(
-          inputToken.value,
-          ERC20JSON.abi,
-          signer
-        );
-        const inputDecimals = await inputTokenContract.decimals();
-        setInputDecimals(inputDecimals);
-        setInputBalance(
-          formatUnits(
-            await inputTokenContract.balanceOf(address),
-            inputDecimals
-          )
-        );
-      } else {
-        setInputDecimals(null);
-        setInputBalance(null);
-      }
-      if (outputToken) {
-        const signer = new ethers.providers.Web3Provider(
-          window.ethereum
-        ).getSigner();
-        const outputTokenContract = new ethers.Contract(
-          outputToken.value,
-          ERC20JSON.abi,
-          signer
-        );
-        outputDecimals = await outputTokenContract.decimals();
-        setOutputDecimals(outputDecimals);
-        setOutputBalance(
-          formatUnits(
-            await outputTokenContract.balanceOf(address),
-            outputDecimals
-          )
-        );
-      } else {
-        setOutputDecimals(null);
-        setOutputBalance(null);
-      }
-    }
-    fetchTokenData();
-  });
+  const inputDecimals = useQueryEth(
+    async () => inputToken && ERC20.attach(inputToken.address).decimals(),
+    [inputToken]
+  );
+  const outputDecimals = useQueryEth(
+    async () => inputToken && ERC20.attach(inputToken.address).decimals(),
+    [inputToken]
+  );
+  const outputBalance = useQueryEth(
+    async () =>
+      outputToken &&
+      formatUnits(
+        await ERC20.attach(outputToken.address).balanceOf(address),
+        outputDecimals
+      )
+  );
   useEffect(() => {
     if (inputToken && outputToken && inputAmount) {
       const exchangeRateCalculator = new ExchangeRateCalculator({
-        baseToken: BASE_TOKEN_ADDRESS,
-        pools,
-        inputToken: inputToken.value,
-        outputToken: outputToken.value,
+        inputPool,
+        outputPool,
       });
       setOutputAmount(
         formatUnits(
-          exchangeRateCalculator.getOutputAmount(inputAmount),
+          exchangeRateCalculator.getOutputAmount(inputAmount.toBigInt()),
           outputDecimals
         )
       );
@@ -101,99 +78,119 @@ export default function Convert(props) {
     } else {
       setOutputAmount(undefined);
     }
-  }, [inputToken, outputToken, inputAmount, outputDecimals, pools]);
+  }, [
+    inputToken,
+    outputToken,
+    inputAmount,
+    outputDecimals,
+    inputPool,
+    outputPool,
+  ]);
+
+  const approveInputToken = async () => {
+    if (!inputToken) return;
+    try {
+      setLoading(true);
+      await ERC20.attach(inputToken.address).approve(
+        router.address,
+        MaxUint256
+      );
+      setLoading(false);
+    } catch (err) {
+      if (err.data && err.data.message) alert(err.data.message);
+      setLoading(false);
+    }
+  };
 
   const convert = async () => {
-    setLoading(true);
     const signer = new ethers.providers.Web3Provider(
       window.ethereum
     ).getSigner();
     const routerContract = new ethers.Contract(
-      ROUTER_ADDRESS,
-      RouterJSON.abi,
+      router.address,
+      RouterABI,
       signer
     );
+    setLoading(true);
     let tx, transactionText;
-    switch (action) {
-      case "buy":
-        tx = await routerContract.buy(outputPool.address, inputAmount);
-        transactionText = `Bought $${formatUnits(
-          inputAmount,
-          BASE_TOKEN_DECIMALS
-        ).replace(/\.0/g, ".00")} worth of ${outputToken.label}`;
-        break;
-      case "sell":
-        tx = await routerContract.sell(inputPool.address, inputAmount);
-        transactionText = `Sold ${formatUnits(inputAmount, inputDecimals)} ${
-          inputToken.label
-        }`;
-        break;
-      case "convert":
-        console.log([inputPool.address, outputPool.address, inputAmount]);
-        tx = await routerContract.convert(
-          inputPool.address,
-          outputPool.address,
-          inputAmount
-        );
-        transactionText = `Converted ${formatUnits(
-          inputAmount,
-          inputDecimals
-        )} ${inputToken.label} to ${outputToken.label}`;
-        break;
-      default:
-        throw new Error("Unknown Action");
-    }
-    const { transactionHash } = await tx.wait();
-    pushTransaction({
-      text: transactionText,
-      hash: transactionHash,
-    });
-    setLoading(false);
-    setInputAmount(null);
-    setInputToken(null);
-    setOutputToken(null);
-    inputAmountRef.current.setRawValue("");
-  };
+    try {
+      switch (action) {
+        case "buy":
+          tx = await routerContract.buyWithSubsity(
+            outputPool.address,
+            inputAmount,
+            feeSubsidyDripAddress,
+            { gasLimit: 3000000 }
+          );
+          transactionText = `Bought $${formatUnits(
+            inputAmount,
+            BASE_TOKEN_DECIMALS
+          ).replace(/\.0+/, ".00")} worth of ${outputToken.ticker}`;
+          break;
+        case "sell":
+          tx = await router.sellWithSubsity(
+            inputPool.address,
+            inputAmount,
+            feeSubsidyDripAddress
+          );
+          transactionText = `Sold ${formatUnits(inputAmount, inputDecimals)} ${
+            inputToken.ticker
+          }`;
+          break;
+        case "convert":
+          tx = await router.convertWithSubsity(
+            inputPool.address,
+            outputPool.address,
+            inputAmount,
+            feeSubsidyDripAddress
+          );
+          transactionText = `Converted ${formatUnits(
+            inputAmount,
+            inputDecimals
+          )} ${inputToken.ticker} to ${outputToken.ticker}`;
+          break;
+        default:
+          throw new Error("Unknown Action");
+      }
+      const { transactionHash } = await tx.wait();
 
-  useEffect(() => {
-    var collapse = new Collapse(transactionDetailsEl.current, {
-      toggle: false,
-    });
-    outputAmount ? collapse.show() : collapse.hide();
-  }, [outputAmount]);
+      pushTransaction({
+        text: transactionText,
+        hash: transactionHash,
+      });
+      setLoading(false);
+      setInputAmount(null);
+      setInputToken(null);
+      setOutputToken(null);
+      inputAmountRef.current.setRawValue("");
+    } catch (err) {
+      if (err.message) alert(err.message);
+      setLoading(false);
+    }
+  };
+  useCollapse(transactionDetailsEl, outputToken !== undefined);
 
   return (
     <form className="d-flex  flex-column">
       <div className="row">
         <div className="col">
           <TokenSelect
-            value={inputToken}
-            pools={pools}
+            chainId={chainId}
+            isOptionDisabled={(token) => token === outputToken}
             onChange={(token) => setInputToken(token)}
             size={4000}
             placeholder="Input token"
           />
         </div>
         <div className="col">
-          <div className="form-floating mb-3">
-            {inputBalance && (
-              <small
-                style={{ right: "10px", top: "7px", position: "absolute" }}
-                className="balance"
-              >
-                <strong>Balance: {inputBalance}</strong>
-              </small>
-            )}
-            <TokenAmountInput
-              className="form-control"
-              id="inputAmount"
-              ref={inputAmountRef}
-              onChange={(inputAmount) => setInputAmount(inputAmount)}
-              tokenAddress={inputToken && inputToken.value}
-              value={inputAmount}
-            />
-            <label htmlFor="inputAmount">Input Amount</label>
-          </div>
+          <TokenAmountInput
+            label="Input Amount"
+            ref={inputAmountRef}
+            address={address}
+            onChange={(inputAmount) => setInputAmount(inputAmount)}
+            token={inputToken}
+            value={inputAmount}
+          />
         </div>
       </div>
       <ArrowDown style={{ margin: "0 auto 10px" }} />
@@ -213,10 +210,9 @@ export default function Convert(props) {
             </h4>
           )}
           <TokenSelect
-            value={outputToken}
-            pools={pools}
+            chainId={chainId}
+            isOptionDisabled={(token) => token === inputToken}
             onChange={(token) => setOutputToken(token)}
-            size={4000}
             placeholder="Output token"
           />
         </div>
@@ -236,21 +232,40 @@ export default function Convert(props) {
         </div>
       </div>
       <div className="d-grid gap-2 mt-2">
-        <button
-          onClick={() => convert()}
+        <SubmitButton
+          tokenRequiresApproval={inputTokenRequiresApproval}
+          convert={convert}
           disabled={!outputAmount}
-          className="btn btn-primary"
-          type="button"
+          loading={loading}
+          approve={approveInputToken}
         >
-          {loading ? (
-            <div className="spinner-border text-light" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-          ) : (
-            "Convert"
-          )}
-        </button>
+          {capitalize(action || "convert")}
+        </SubmitButton>
       </div>
     </form>
   );
+}
+
+function SubmitButton(props) {
+  const {
+    approve,
+    tokenRequiresApproval,
+    convert,
+    children,
+    loading,
+    disabled,
+  } = props;
+  if (tokenRequiresApproval) {
+    return (
+      <Button onClick={() => approve()} disabled={disabled} loading={loading}>
+        Approve
+      </Button>
+    );
+  } else {
+    return (
+      <Button onClick={() => convert()} disabled={disabled} loading={loading}>
+        {children}
+      </Button>
+    );
+  }
 }
