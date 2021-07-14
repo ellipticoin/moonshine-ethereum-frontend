@@ -2,7 +2,7 @@
   {
     "inputs": [
       {
-        "internalType": "contract IERC20",
+        "internalType": "contract IERC20Metadata",
         "name": "_baseToken",
         "type": "address"
       }
@@ -18,9 +18,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "inputAmount",
-        "type": "uint256"
+        "type": "int64"
       }
     ],
     "name": "addLiquidity",
@@ -33,7 +33,7 @@
     "name": "baseToken",
     "outputs": [
       {
-        "internalType": "contract IERC20",
+        "internalType": "contract IERC20Metadata",
         "name": "",
         "type": "address"
       }
@@ -52,9 +52,9 @@
     "name": "baseTokenBalances",
     "outputs": [
       {
-        "internalType": "uint112",
+        "internalType": "int64",
         "name": "",
-        "type": "uint112"
+        "type": "int64"
       }
     ],
     "stateMutability": "view",
@@ -68,9 +68,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "inputAmount",
-        "type": "uint256"
+        "type": "int64"
       }
     ],
     "name": "buy",
@@ -86,9 +86,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "inputAmount",
-        "type": "uint256"
+        "type": "int64"
       },
       {
         "internalType": "contract Subsidizer",
@@ -135,9 +135,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "amount",
-        "type": "uint256"
+        "type": "int64"
       }
     ],
     "name": "chargeBaseToken",
@@ -153,9 +153,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "amount",
-        "type": "uint256"
+        "type": "int64"
       }
     ],
     "name": "chargeToken",
@@ -176,9 +176,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "inputAmount",
-        "type": "uint256"
+        "type": "int64"
       }
     ],
     "name": "convert",
@@ -199,9 +199,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "inputAmount",
-        "type": "uint256"
+        "type": "int64"
       },
       {
         "internalType": "contract Subsidizer",
@@ -217,24 +217,24 @@
   {
     "inputs": [
       {
-        "internalType": "contract IERC20",
+        "internalType": "contract IERC20Metadata",
         "name": "token",
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "liquidityFee",
-        "type": "uint256"
+        "type": "int64"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "initialBaseTokenAmount",
-        "type": "uint256"
+        "type": "int64"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "initialTokenAmount",
-        "type": "uint256"
+        "type": "int64"
       },
       {
         "internalType": "string",
@@ -255,24 +255,24 @@
   {
     "inputs": [
       {
-        "internalType": "contract IERC20",
+        "internalType": "contract IERC20Metadata",
         "name": "token",
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "liquidityFee",
-        "type": "uint256"
+        "type": "int64"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "initialBaseTokenAmount",
-        "type": "uint256"
+        "type": "int64"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "initialTokenAmount",
-        "type": "uint256"
+        "type": "int64"
       },
       {
         "internalType": "string",
@@ -329,9 +329,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "amount",
-        "type": "uint256"
+        "type": "int64"
       }
     ],
     "name": "payBaseToken",
@@ -347,9 +347,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "amount",
-        "type": "uint256"
+        "type": "int64"
       }
     ],
     "name": "payToken",
@@ -384,9 +384,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
-        "name": "percentageToBurn",
-        "type": "uint256"
+        "internalType": "int64",
+        "name": "amount",
+        "type": "int64"
       }
     ],
     "name": "removeLiquidity",
@@ -397,14 +397,62 @@
   {
     "inputs": [
       {
+        "internalType": "contract IERC20Metadata",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "scaleDownTokenAmount",
+    "outputs": [
+      {
+        "internalType": "int64",
+        "name": "",
+        "type": "int64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IERC20Metadata",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "int64",
+        "name": "amount",
+        "type": "int64"
+      }
+    ],
+    "name": "scaleUpTokenAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "contract Pool",
         "name": "pool",
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "inputAmount",
-        "type": "uint256"
+        "type": "int64"
       }
     ],
     "name": "sell",
@@ -420,9 +468,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "inputAmount",
-        "type": "uint256"
+        "type": "int64"
       },
       {
         "internalType": "contract Subsidizer",
@@ -453,9 +501,9 @@
     "name": "tokenBalances",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "",
-        "type": "uint256"
+        "type": "int64"
       }
     ],
     "stateMutability": "view",
@@ -474,9 +522,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "int64",
         "name": "amount",
-        "type": "uint256"
+        "type": "int64"
       }
     ],
     "name": "transferBaseToken",

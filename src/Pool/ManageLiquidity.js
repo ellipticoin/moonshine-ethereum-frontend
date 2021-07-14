@@ -1,16 +1,16 @@
 import { Tab } from "bootstrap";
 import { useEffect, useRef } from "react";
-import { ethers } from "ethers";
-import PendingYield from "./PendingYield";
-const {
-  utils: { formatUnits },
-} = ethers;
+import classnames from "classnames";
+import Harvest from "./Harvest";
+import AddLiquidity from "./AddLiquidity";
+import RemoveLiquidity from "./RemoveLiquidity";
 
 export default function ManageLiquidity(props) {
-  const { address, liquidityTokenBalance, pool } = props;
+  const { address, chainId, poolBalance, pool, poolId } = props;
   const tabsEl = useRef(null);
 
   useEffect(() => {
+    if ([undefined, 0n].includes(poolBalance)) return;
     var triggerTabList = [].slice.call(
       tabsEl.current.querySelectorAll("button")
     );
@@ -26,56 +26,74 @@ export default function ManageLiquidity(props) {
 
   return (
     <>
-      <h3 className="mb-4">
-        Liquidity Tokens in Pool: {formatUnits(liquidityTokenBalance)}
-      </h3>
-      <ul ref={tabsEl} className="nav nav-pills nav-fill">
-        <li className="nav-item">
-          <button
-            className="nav-link active"
-            data-bs-target="#harvest"
-            aria-current="page"
-            href="/"
-          >
-            Harvest
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className="nav-link"
-            data-bs-target="#add-liquidity"
-            aria-current="page"
-            href="/"
-          >
-            Add Liqudity
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className="nav-link"
-            data-bs-target="#remove-liquidity"
-            href="/"
-          >
-            Remove Liquidity
-          </button>
-        </li>
-      </ul>
+      {poolBalance > 0n ? (
+        <ul ref={tabsEl} className="nav nav-tabs nav-fill">
+          {poolBalance > 0n ? (
+            <li className="nav-item">
+              <button
+                className="nav-link active"
+                data-bs-target="#harvest"
+                aria-current="page"
+                href="/"
+              >
+                Harvest
+              </button>
+            </li>
+          ) : null}
+          <li className="nav-item">
+            <button
+              className={classnames("nav-link", {
+                active: poolBalance === 0n,
+              })}
+              data-bs-target="#add-liquidity"
+              aria-current="page"
+              href="/"
+            >
+              Add Liquidity
+            </button>
+          </li>
+          {poolBalance > 0n ? (
+            <li className="nav-item">
+              <button
+                className="nav-link"
+                data-bs-target="#remove-liquidity"
+                href="/"
+              >
+                Remove Liquidity
+              </button>
+            </li>
+          ) : null}
+        </ul>
+      ) : null}
       <div className="tab-content">
+        {poolBalance > 0n ? (
+          <div
+            className="tab-pane fade show active"
+            id="harvest"
+            role="tabpanel"
+            aria-labelledby="home-tab"
+          >
+            <Harvest
+              address={address}
+              chainId={chainId}
+              pool={pool}
+              poolId={poolId}
+              poolBalance={poolBalance}
+            />
+          </div>
+        ) : null}
         <div
-          className="tab-pane fade show active"
-          id="harvest"
-          role="tabpanel"
-          aria-labelledby="home-tab"
-        >
-          <PendingYield address={address} pool={pool} />
-        </div>
-        <div
-          className="tab-pane fade"
+          className={classnames(
+            "tab-pane",
+            "fade",
+            { active: poolBalance === 0n },
+            { show: poolBalance === 0n }
+          )}
           id="add-liquidity"
           role="tabpanel"
           aria-labelledby="profile-tab"
         >
-          Add Liquidity
+          <AddLiquidity address={address} poolId={poolId} pool={pool} />
         </div>
         <div
           className="tab-pane fade"
@@ -83,7 +101,12 @@ export default function ManageLiquidity(props) {
           role="tabpanel"
           aria-labelledby="messages-tab"
         >
-          Remove Liquidity
+          {poolBalance > 0n ? (
+          <RemoveLiquidity
+            poolBalance={poolBalance}
+            address={address}
+            poolId={poolId}
+          />): null}
         </div>
       </div>
     </>

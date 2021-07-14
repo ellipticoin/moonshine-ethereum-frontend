@@ -1,0 +1,64 @@
+[
+  {
+    "name": "Ethereum",
+    "bridgeChainIds": [],
+    "chainId": "0x"
+  },
+  {
+    "name": "Polygon",
+    "chainId": "0x89",
+    "bridgeChainIds": [],
+    "contractAddresses": {
+      "Router": "0xC5aab1026D4213286771104AdCE1b731222D0Ce8",
+      "BaseToken": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
+      "MoonshineToken": "0x7058c90773c2381980eEDF9C4ADBe52785EC31b8"
+    }
+  },
+  {
+    "name": "Mumbai",
+    "chainId": "0x13881",
+    "bridgeChainIds": ["0x4"],
+    "contractAddresses": {
+      "Router": "0xf27efEc86BB83558374921E50f54aD9557f22e51",
+      "FeeSubsidyDrip": "0xdaac6C6ae5a5020f35dB0814754eD1B3b12012B8",
+      "Bridge": "0x15e47A3effd172C226A410D9A341780fFfC831eA",
+      "BaseToken": "0xa09FdD9903cEb7ea94D46129fa0afA6AF08e3959",
+      "MoonshineToken": "0x3a236a18b5B34Fbe6F65372273dFD15C2f13F54d"
+    }
+  },
+  {
+    "name": "Rinkeby",
+    "chainId": "0x4",
+    "bridgeChainIds": ["0x13881"],
+    "contractAddresses": {
+      "Router": "0x4204199B102c5D408215583178a69687ee6255bA",
+      "FeeSubsidyDrip": "0xa5f8EAEf89757ccE93ff03Fc6b6ed973D2Ea56Ca",
+      "Bridge": "0xa976a76C16B4680D8C5Ba56558fdb4a5898A0426",
+      "BaseToken": "0xF6e60e88b5B364e4c4648BC99437bd1700790019"
+    }
+  },
+  {
+    "name": "Rinkarby",
+    "chainId": "0x66eeb",
+    "bridgeChainIds": [],
+    "contractAddresses": {
+      "Router": "0x1dE6673d701cd5f74463DB2b3726D0732f68Ef07",
+      "FeeSubsidyDrip": "0x213c1E62858611E8971813c143D5935B89F2222e",
+      "BaseToken": "0x68420cD354d0190E5ee0765f93427e600531c60a"
+    }
+  },
+  {
+    "name": "Binanace Smart Chain (unsupported)",
+    "bridgeChainIds": []
+  },
+  {
+    "name": "Avalance",
+    "bridgeChainIds": [],
+    "chainId": "0xa86a"
+  },
+  {
+    "name": "Fantom",
+    "bridgeChainIds": [],
+    "chainId": "0xfa"
+  }
+]

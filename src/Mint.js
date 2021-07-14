@@ -4,15 +4,16 @@ import TokenSelect from "./TokenSelect";
 import TokenAmountInput from "./TokenAmountInput";
 import { useState } from "react";
 import { ethers } from "ethers";
-import { usePools } from "./contracts";
+const {
+  constants: { AddressZero },
+} = ethers;
 
 export default function Mint(props) {
   const { address } = props;
-  const [token, setToken] = useState();
+  const [token, setToken] = useState({ address: AddressZero });
   const [value, setValue] = useState(0n);
   const [loading, setLoading] = useState(false);
   const inputAmountRef = useRef(null);
-  const pools = usePools();
   const mint = async () => {
     setLoading(true);
     const signer = new ethers.providers.Web3Provider(
@@ -27,18 +28,16 @@ export default function Mint(props) {
     await tx.wait();
     setValue(0n);
     inputAmountRef.current.setRawValue("");
-    setToken(null);
     setLoading(false);
   };
+
   return (
     <form className="d-flex  flex-column">
       <div className="row">
         <div className="col">
           <TokenSelect
-            value={token}
-            pools={pools}
+            value={token.address}
             onChange={(token) => setToken(token)}
-            size={4000}
             placeholder="Token To Mint"
           />
         </div>
@@ -47,7 +46,7 @@ export default function Mint(props) {
             label="Amount To Mint"
             ref={inputAmountRef}
             address={address}
-            token={token}
+            tokenAddress={token.address}
             onChange={(value) => setValue(value)}
             value={value}
           />

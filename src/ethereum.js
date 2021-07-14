@@ -1,20 +1,26 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { ERC20 } from "./contracts";
-import { useRouterAddress, ROUTER } from "./contracts";
+import { POLYGON_CHAIN_ID } from "./constants";
+import { useInterval } from "./helpers";
+import { AMM } from "./contracts";
+import _ from "lodash";
 
 const {
   BigNumber,
-  utils: { formatUnits },
+  utils: { formatUnits, getAddress, id },
+  constants: { AddressZero },
 } = ethers;
 
-export function useTokenBalance(token, address) {
+window.subscriptions = [];
+
+export function useTokenBalance(tokenAddress, address) {
   const inputBalance = useQueryEth(async () => {
-    return token && ERC20.attach(token.address).balanceOf(address);
-  }, [token, address]);
+    return tokenAddress && ERC20.attach(tokenAddress).balanceOf(address);
+  }, [tokenAddress, address]);
   const decimals = useQueryEth(async () => {
-    return token && ERC20.attach(token.address).decimals();
-  }, [token]);
+    return tokenAddress && ERC20.attach(tokenAddress).decimals();
+  }, [tokenAddress]);
   if (inputBalance) {
     return formatUnits(inputBalance, decimals);
   }
@@ -51,29 +57,21 @@ export function useBlockNumber() {
   return blockNumber;
 }
 
-export function useTimestamp(nonce) {
-  const routerAddress = useRouterAddress();
+export function useTimestamp() {
+  let [secondsSinceLoad, setSecondsSinceLoad] = useState(0n);
+  useInterval(() => {
+    setSecondsSinceLoad(secondsSinceLoad + 1n);
+  }, 1000);
   const currentBlockTimestamp = useQueryEth(
-    async () =>
-      routerAddress &&
-      (await ROUTER.attach(routerAddress).currentBlockTimestamp()),
-    [nonce, routerAddress]
+    AMM,
+    async (contract) => contract.currentBlockTimestamp(),
+    [],
+    [id("Harvest(address,int64)")]
   );
-  const [secondsSinceLoad, setSecondsSinceLoad] = useState(0n);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSecondsSinceLoad(secondsSinceLoad + 1n);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [secondsSinceLoad]);
-  useEffect(() => {
-    setSecondsSinceLoad(0n);
-  }, [currentBlockTimestamp]);
-  if (currentBlockTimestamp) {
-    return currentBlockTimestamp + secondsSinceLoad;
-  } else {
-    return null;
-  }
+
+  return currentBlockTimestamp
+    ? secondsSinceLoad + currentBlockTimestamp
+    : null;
 }
 
 export function useEthCallback(f) {
@@ -92,24 +90,6 @@ export function useEthCallback(f) {
   return loading;
 }
 
-export function useQueryEth(f, dependencies = []) {
-  const [returnValue, setReturnValue] = useState(null);
-
-  useEffect(() => {
-    let isCancelled = false;
-    f().then((returnValue, a) => {
-      if (!isCancelled) {
-        setReturnValue(convertToNative(returnValue));
-      }
-    });
-    return () => {
-      isCancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, dependencies);
-  return returnValue;
-}
-
 function convertToNative(value) {
   if (BigNumber.isBigNumber(value)) {
     return BigInt(value.toString());
@@ -119,63 +99,175 @@ function convertToNative(value) {
 }
 
 export function useMetaMaskIsConnected() {
-  const [ethereumAccountsLoading, ethereumAcccounts] = useEthereumAccounts();
-  const [chainIdLoading, chainId] = useChainId();
-  return [
-    ethereumAccountsLoading || chainIdLoading,
+  const ethereumAcccounts = useEthereumAccounts();
+  const chainId = useChainId();
+  return (
     ethereumAcccounts &&
-      ethereumAcccounts.length > 0 &&
-      ["0x4", "0x66eeb", "0x13881"].includes(chainId),
-  ];
+    ethereumAcccounts.length > 0 &&
+    chainId === POLYGON_CHAIN_ID
+  );
 }
 
 export function useChainId() {
-  const [chainId, setChainId] = useState([true]);
+  const [chainId, setChainId] = useState(null);
   useEffect(() => {
     async function fetchChainId() {
       if (window.ethereum) {
-        setChainId([
-          false,
-          await window.ethereum.request({ method: "eth_chainId" }),
-        ]);
+        setChainId(await window.ethereum.request({ method: "eth_chainId" }));
       }
     }
     fetchChainId();
-    window.ethereum.on("chainChanged", fetchChainId);
+    window.ethereum.on("chainChanged", setChainId);
   }, []);
   return chainId;
 }
 
 export function useEthereumAccounts() {
-  const [ethereumAccounts, setEthereumAccounts] = useState([true]);
+  const [ethereumAccounts, setEthereumAccounts] = useState();
   useEffect(() => {
     async function fetchEthereumAccounts() {
       if (window.ethereum) {
-        setEthereumAccounts([
-          false,
-          await window.ethereum.request({ method: "eth_accounts" }),
-        ]);
+        setEthereumAccounts(
+          (await window.ethereum.request({ method: "eth_accounts" })).map(
+            getAddress
+          )
+        );
       }
     }
     fetchEthereumAccounts();
-    window.ethereum.on("accountsChanged", fetchEthereumAccounts);
+    window.ethereum.on("accountsChanged", (accounts) =>
+      setEthereumAccounts(accounts.map(getAddress))
+    );
   }, []);
   return ethereumAccounts;
 }
+export async function connectToPolygon() {
+  try {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: "0x89" }],
+    });
+  } catch (switchError) {
+    // This error code indicates that the chain has not been added to MetaMask.
+    if (switchError.code === 4902) {
+      try {
+        await window.ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [
+            {
+              chainId: "0x89",
+              chainName: "Matic Mainnet",
+              rpcUrls: ["https://rpc-mainnet.maticvigil.com/"],
+              blockExplorerUrls: ["https://polygonscan.com/"],
+            },
+          ],
+        });
+      } catch (addError) {
+        // handle "add" error
+      }
+    }
+    // handle other "switch" errors
+  }
+  await ethRequestAccounts();
+}
 
 export async function ethRequestAccounts() {
-  await window.ethereum.request({
-    method: "wallet_addEthereumChain",
-    params: [
-      {
-        chainId: "0x66eeb",
-        chainName: "ArbRinkeby",
-        rpcUrls: ["https://rinkeby.arbitrum.io/rpc"],
-        blockExplorerUrls: ["https://rinkeby-explorer.arbitrum.io'"],
-      },
-    ],
-  });
   return window.ethereum.request({ method: "eth_requestAccounts" });
+}
+
+export function useQueryEth(contract, f, dependencies = [], topics) {
+  const [returnValue, setReturnValue] = useState(null);
+  const chainId = useChainId();
+
+  useEffect(() => {
+    if (chainId !== POLYGON_CHAIN_ID) {
+      setReturnValue(undefined);
+      return null;
+    }
+    if (contract.address === AddressZero) {
+      setReturnValue(undefined);
+      return null;
+    }
+    let filter,
+      listener,
+      isCancelled = false;
+    async function subscribeToEvents() {
+      filter = {
+        address: contract.address,
+        topics,
+      };
+      listener = (result) => {
+      // console.log(result)
+        try {
+          f(contract.attach(contract.address)).then((newReturnValue) => {
+            updateReturnValue(
+              isCancelled,
+              setReturnValue,
+              returnValue,
+              newReturnValue
+            );
+          });
+        } catch (e) {
+          console.log(e);
+          // no-op
+        }
+      };
+      // console.log("push");
+      // console.log(filter);
+      window.subscriptions.push(filter);
+      // console.log(window.subscriptions);
+      contract.provider.on(filter, listener);
+    }
+    if (topics) {
+      subscribeToEvents();
+    }
+    f(contract.attach(contract.address)).then((newReturnValue) => {
+      updateReturnValue(
+        isCancelled,
+        setReturnValue,
+        returnValue,
+        newReturnValue
+      );
+    });
+    return () => {
+      isCancelled = true;
+      // console.log("remove");
+      // console.log(filter);
+      if (filter) {
+        contract.provider.off(filter, listener);
+      }
+      const index = _.findIndex(window.subscriptions, (subscription) =>
+        _.isEqual(subscription, filter)
+      );
+      window.subscriptions.splice(index, 1);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chainId, contract.address, ...dependencies]);
+  return returnValue;
+}
+
+export function updateReturnValue(
+  isCancelled,
+  setReturnValue,
+  returnValue,
+  newReturnValue
+) {
+  if (!isCancelled) {
+    // console.log(newReturnValue)
+    // console.log(newReturnValue.length)
+    if (newReturnValue.length) {
+      const oldReturnValue = returnValue || {};
+      const newObject = Object.fromEntries(
+        Object.keys(newReturnValue)
+          .filter((key) => isNaN(key))
+          .map((key, index) => [key, convertToNative(newReturnValue[key])])
+      );
+
+      setReturnValue({ ...oldReturnValue, ...newObject });
+    } else {
+      setReturnValue(convertToNative(newReturnValue));
+    }
+  }
 }
 
 export async function ethSwitchChain(chainId) {

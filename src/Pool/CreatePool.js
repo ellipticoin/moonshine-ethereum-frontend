@@ -1,73 +1,56 @@
 import TokenAmountInput from "../TokenAmountInput";
-import { useState, useEffect, useMemo } from "react";
+import TokenAmount from "../TokenAmount";
+import { getContractAddress } from "../contracts";
+import { useState, useMemo } from "react";
 import { BASE_TOKEN_DECIMALS } from "../constants";
 import { ERC20 } from "../contracts";
 import ERC20JSON from "@openzeppelin/contracts/build/contracts/ERC20";
-import { ethers, BigNumber } from "ethers";
+import { ethers } from "ethers";
 import { useBaseTokenAddress, useRouter } from "../contracts";
+import { useQueryEth } from "../ethereum.js";
 import Button from "../Button";
 
 const {
-  utils: { formatUnits, parseUnits },
-  constants: { WeiPerEther, MaxUint256 },
+  utils: { parseUnits },
+  constants: { MaxUint256 },
 } = ethers;
 
 export default function CreatePool(props) {
-  const { address, token } = props;
-  const [decimals, setDecimals] = useState();
+  const { address, token, chainId } = props;
   const [initialTokenAmount, setInitialTokenAmount] = useState(null);
   const [initialPrice, setInitialPrice] = useState(null);
-  const [tokenBalance, setTokenBalance] = useState();
-  const [baseTokenBalance, setBaseTokenBalance] = useState();
   const [loading, setLoading] = useState(false);
-  const [tokenAllowance, setTokenAllowance] = useState();
-  const [baseTokenAllowance, setBaseTokenAllowance] = useState();
   const baseTokenAddress = useBaseTokenAddress();
   const router = useRouter();
+  const baseTokenBalance = useQueryEth(
+    ERC20.attach(getContractAddress(chainId, "BaseToken")),
+    async (contract) => {
+      return contract.balanceOf(address);
+    },
+    [chainId, address]
+  );
+  const baseTokenAllowance = useQueryEth(
+    ERC20.attach(getContractAddress(chainId, "BaseToken")),
+    async (contract) => {
+      return contract.allowance(address, getContractAddress(chainId, "Router"));
+    },
+    [chainId, address]
+  );
+  const tokenBalance = useQueryEth(
+    ERC20.attach(token.address),
+    async (contract) => {
+      return contract.balanceOf(address);
+    },
+    [chainId, address]
+  );
+  const tokenAllowance = useQueryEth(
+    ERC20.attach(token.address),
+    async (contract) => {
+      return contract.allowance(address, getContractAddress(chainId, "Router"));
+    },
+    [chainId, address]
+  );
 
-  useEffect(() => {
-    let isCancelled = false;
-    async function fetchTokenData() {
-      if (!token) return;
-      const signer = new ethers.providers.Web3Provider(
-        window.ethereum
-      ).getSigner();
-      const tokenContract = new ethers.Contract(
-        token.address,
-        ERC20JSON.abi,
-        signer
-      );
-      const decimals = await tokenContract.decimals();
-      const baseTokenBalance = BigInt(
-        (await ERC20.attach(baseTokenAddress).balanceOf(address)).toString()
-      );
-      const tokenBalance = BigInt(
-        (await tokenContract.balanceOf(address)).toString()
-      );
-      const tokenAllowance = BigInt(
-        (await tokenContract.allowance(address, router.address)).toString()
-      );
-      const baseTokenAllowance = BigInt(
-        (
-          await ERC20.attach(baseTokenAddress).allowance(
-            address,
-            router.address
-          )
-        ).toString()
-      );
-      if (!isCancelled) {
-        setBaseTokenBalance(baseTokenBalance);
-        setTokenBalance(tokenBalance);
-        setTokenAllowance(tokenAllowance);
-        setBaseTokenAllowance(baseTokenAllowance);
-        setDecimals(decimals);
-      }
-    }
-    fetchTokenData();
-    return () => {
-      isCancelled = true;
-    };
-  });
   const tokenRequiresApproval = useMemo(
     () => tokenAllowance < initialTokenAmount,
     [tokenAllowance, initialTokenAmount]
@@ -76,13 +59,16 @@ export default function CreatePool(props) {
   const initialBaseTokenAmount = useMemo(() => {
     if (!initialTokenAmount) return;
     if (!initialPrice) return;
-    console.log(decimals);
-    return initialTokenAmount
-      .mul(initialPrice)
-      .div(WeiPerEther)
-      .mul(10 ** BASE_TOKEN_DECIMALS)
-      .div(10 ** decimals);
-  }, [initialTokenAmount, initialPrice, decimals]);
+    console.log(initialTokenAmount * initialPrice);
+    console.log(
+      (initialPrice * initialTokenAmount) /
+        BigInt(10) ** BigInt(BASE_TOKEN_DECIMALS)
+    );
+    return (
+      (initialTokenAmount * initialPrice) /
+      BigInt(10) ** BigInt(BASE_TOKEN_DECIMALS)
+    );
+  }, [initialTokenAmount, initialPrice]);
 
   const baseTokenRequiresApproval = useMemo(
     () => baseTokenAllowance < initialBaseTokenAmount,
@@ -123,17 +109,20 @@ export default function CreatePool(props) {
     await tx.wait();
     setLoading(false);
   };
+  if (!address) {
+    alert("here");
+  }
   return (
     <>
       <div className="row mb-2">
         <div className="col">
           <TokenAmountInput
             label="Initial Token Amount"
+            address={address}
             onChange={(initalTokenAmount) =>
               setInitialTokenAmount(initalTokenAmount)
             }
-            tokenAddress={token}
-            address={address}
+            tokenAddress={token.address}
             value={initialTokenAmount}
           />
         </div>
@@ -142,7 +131,9 @@ export default function CreatePool(props) {
         <div className="col">
           <TokenAmountInput
             label="Initial Price"
+            address={address}
             onChange={(initialPrice) => setInitialPrice(initialPrice)}
+            tokenAddress={token.address}
             value={initialPrice}
           />
         </div>
@@ -175,18 +166,15 @@ export default function CreatePool(props) {
                 className="balance"
               >
                 <strong>
-                  Balance:{" "}
-                  {formatUnits(
-                    BigNumber.from(baseTokenBalance.toString()),
-                    BASE_TOKEN_DECIMALS
-                  )}
+                  Balance: <TokenAmount>{baseTokenBalance}</TokenAmount>
                 </strong>
               </small>
             )}
-            <h4 className="align-bottom mt-4">
-              {initialBaseTokenAmount &&
-                formatUnits(initialBaseTokenAmount, BASE_TOKEN_DECIMALS)}
-            </h4>
+            <h5 className="align-bottom">
+              <TokenAmount decimals={BASE_TOKEN_DECIMALS}>
+                {initialBaseTokenAmount}
+              </TokenAmount>
+            </h5>
           </div>
         </div>
       </div>

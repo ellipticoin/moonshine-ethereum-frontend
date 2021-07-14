@@ -1,0 +1,26 @@
+[
+  {
+    "symbol": "Ether",
+    "logoURI": "https://i.ibb.co/0jBv18b/download.png",
+    "name": "Ether",
+    "address": "0x93df2b1E25CfB572dF08793cf57A23B0BcC11411"
+  },
+  {
+    "symbol": "MSX",
+    "logoURI": "https://i.ibb.co/kg8ZTcM/logo-d5a83f30-1.png",
+    "name": "Moonshine",
+    "address": "0xf62e07DE13896b32299def35EC2fc0968a2686C5"
+  },
+  {
+    "symbol": "USDC",
+    "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+    "name": "USD Coin",
+    "address": "0x68420cD354d0190E5ee0765f93427e600531c60a"
+  },
+  {
+    "symbol": "WBTC",
+    "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",
+    "name": "Wrapped BTC",
+    "address": "0xb247F72B5f72E62d7a2c76a84bc74558AFdd8d97"
+  }
+]

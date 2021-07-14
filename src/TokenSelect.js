@@ -1,13 +1,17 @@
 import { components as reactSelectComponents } from "react-select";
-import AsyncSelect from "react-select/async";
+import Select from "react-select";
 import { PROD } from "./constants";
 import rinkarbyTokenList from "./rinkarbyTokenList.json";
 import rinkebyTokenList from "./rinkebyTokenList.json";
-import React, { Component } from "react";
+import mumbaiTokenList from "./mumbaiTokenList.json";
+import polygonTokenList from "./polygonTokenList.json";
+import React, { useEffect, useState } from "react";
 
-const tokenOptions = async (inputValue, includeBaseToken) => {
+const tokenOptions = async (includeBaseToken) => {
   const tokens = PROD
-    ? await fetch("https://gateway.ipfs.io/ipns/tokens.uniswap.org")
+    ? await fetch(
+        "https://unpkg.com/quickswap-default-token-list@1.0.91/build/quickswap-default.tokenlist.json"
+      )
         .then((response) => response.json())
         .then(({ tokens }) => tokens)
     : await developmentTokenList();
@@ -15,8 +19,8 @@ const tokenOptions = async (inputValue, includeBaseToken) => {
   return tokens
     .filter(
       ({ name, chainId, symbol }) =>
-        name.toLowerCase().includes(inputValue.toLowerCase()) &&
-        (!PROD || chainId === 1) &&
+        // name.toLowerCase().includes(inputValue.toLowerCase()) &&
+        (!PROD || chainId === 137) &&
         (includeBaseToken === undefined || symbol !== "USDC")
     )
     .map(({ address, logoURI, symbol, name }, index) => ({
@@ -34,8 +38,11 @@ const developmentTokenList = async () => {
       return rinkarbyTokenList;
     case "0x4":
       return rinkebyTokenList;
+    case "0x13881":
+      return mumbaiTokenList;
+    case "0x89":
+      return polygonTokenList;
     default:
-      throw new Error("Unknown Network");
   }
 };
 
@@ -47,51 +54,46 @@ const styles = {
     fontSize: "1rem",
   }),
 };
-
-export default class WithPromises extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {};
-    this.setSelection = this.setSelection.bind(this);
-  }
-
-  setSelection(e) {
-    this.setState();
-  }
-  render() {
-    const { onChange, includeBaseToken, isOptionDisabled, chainId } =
-      this.props;
-    return (
-      <div className="mb-3">
-        <AsyncSelect
-          {...this.props}
-          cacheOptions
-          defaultOptions
-          loadOptions={(inputValue) =>
-            tokenOptions(inputValue, includeBaseToken, chainId)
-          }
-          onChange={(selection) => {
-            onChange({
-              address: selection.value,
-              ticker: selection.label,
-            });
-            this.setSelection(selection);
-          }}
-          value={this.state.selection}
-          components={{ Option: IconOption, SingleValue: IconSingleValue }}
-          isOptionDisabled={
-            (option) => isOptionDisabled && isOptionDisabled(option.value)
-            // !pools.some(
-            //   (pool) =>
-            //     pool.token === option.value ||
-            //     option.value === BASE_TOKEN_ADDRESS
-            // )
-          }
-          styles={styles}
-        />
-      </div>
-    );
-  }
+function filterOption({ label, chainId, value, data }, inputValue) {
+  return (
+    label.toLowerCase().includes(inputValue.toLowerCase()) ||
+    data.name.toLowerCase().includes(inputValue.toLowerCase())
+  );
+}
+export default function TokenSelect(props) {
+  const { onChange, includeBaseToken, placeholder } = props;
+  const [tokens, setTokens] = useState([]);
+  useEffect(() => {
+    let isCancelled = false;
+    async function fetchTokens() {
+      const newTokens = await tokenOptions(includeBaseToken);
+      if (!isCancelled) {
+        setTokens(newTokens);
+      }
+    }
+    fetchTokens();
+    return () => {
+      isCancelled = true;
+    };
+  }, [includeBaseToken]);
+  return tokens.length ? (
+    <div className="mb-3">
+      <Select
+        placeholder={placeholder}
+        components={{ Option: IconOption, SingleValue: IconSingleValue }}
+        options={tokens}
+        filterOption={filterOption}
+        onChange={(selection) => {
+          onChange({
+            address: selection.value,
+            ticker: selection.label,
+          });
+        }}
+        value={tokens.find(({ value }) => value === props.value) || null}
+        styles={styles}
+      />
+    </div>
+  ) : null;
 }
 
 const { Option, SingleValue } = reactSelectComponents;

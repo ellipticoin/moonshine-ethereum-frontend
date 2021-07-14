@@ -1,31 +1,62 @@
 import "./App.css";
 import logo from "./logo.svg";
-import { PROD } from "./constants";
+import { PROD, POLYGON_CHAIN_ID } from "./constants";
+import { MSX } from "./contracts";
 import {
   useEthereumAccounts,
   ethRequestAccounts,
   useMetaMaskIsConnected,
 } from "./ethereum";
-import Convert from "./Convert";
+import Swap from "./Swap";
 import Toast from "./Toast";
 import Mint from "./Mint";
 import UnlockMetaMask from "./UnlockMetaMask";
 import Pool from "./Pool/index";
-import Drip from "./Drip";
-import Bridge from "./Bridge";
 import UserAddress from "./UserAddress";
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocalStorage } from "./helpers";
+import { useChainId } from "./ethereum";
 
 function App() {
-  const [, ethereumAcccounts] = useEthereumAccounts();
+  const [tokenAdded, setTokenAdded] = useLocalStorage("tokenAdded", false);
+  const ethereumAcccounts = useEthereumAccounts();
+  const chainId = useChainId();
   const [transactions, setTransactions] = useState([]);
-  const [metamaskIsConnectedLoading, metamaskIsConnected] =
-    useMetaMaskIsConnected();
-
+  const metamaskIsConnected = useMetaMaskIsConnected();
   const pushTransaction = (transaction) => {
     setTransactions([...transactions, transaction]);
   };
+  useEffect(() => {
+    async function addToken() {
+      try {
+        if (!tokenAdded) {
+          await new Promise((r) => setTimeout(r, 2000));
+          await window.ethereum.request({
+            method: "wallet_watchAsset",
+            params: {
+              type: "ERC20",
+              options: {
+                address: MSX.address,
+                symbol: "MSX",
+                decimals: 6,
+                image:
+                  "https://polygon.moonshine.exchange/static/media/logo.d5a83f30.svg",
+              },
+            },
+          });
+          setTokenAdded(true);
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    }
+
+    if (chainId === POLYGON_CHAIN_ID && !tokenAdded) {
+      addToken();
+    }
+  }, [chainId, tokenAdded, setTokenAdded]);
+
   return (
     <Router>
       <nav className="navbar navbar-expand-lg navbar-dark">
@@ -48,17 +79,12 @@ function App() {
             <ul className="navbar-nav">
               <li className="nav-item">
                 <Link className="nav-link" to="/">
-                  Convert
+                  Swap
                 </Link>
               </li>
               <li className="nav-item">
                 <Link className="nav-link" to="/pool">
                   Pool
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/bridge">
-                  Bridge
                 </Link>
               </li>
               {!PROD && (
@@ -71,12 +97,15 @@ function App() {
               <li className="nav-item"></li>
             </ul>
           </div>
+        </div>
+        {metamaskIsConnected && tokenAdded ? (
           <UserAddress
             metamaskIsConnected={metamaskIsConnected}
             address={metamaskIsConnected && ethereumAcccounts[0]}
+            chainId={chainId}
             ethRequestAccounts={ethRequestAccounts}
           />
-        </div>
+        ) : null}
       </nav>
 
       <div
@@ -107,7 +136,7 @@ function App() {
       <div>
         <div className="jumbotron vertical-center">
           <div className="container p-3">
-            {metamaskIsConnectedLoading ? (
+            {metamaskIsConnected === null && !tokenAdded ? (
               <div
                 className="d-flex align-items-center justify-content-center"
                 style={{ height: "236px" }}
@@ -119,26 +148,23 @@ function App() {
             ) : metamaskIsConnected ? (
               <Switch>
                 <Route path="/mint">
-                  <Mint address={ethereumAcccounts[0]} />
+                  <Mint address={ethereumAcccounts[0]} chainId={chainId} />
                 </Route>
                 <Route path="/pool">
-                  <Pool address={ethereumAcccounts[0]} />
-                </Route>
-                <Route path="/bridge">
-                  <Bridge address={ethereumAcccounts[0]} />
-                </Route>
-                <Route path="/drip">
-                  <Drip address={ethereumAcccounts[0]} />
+                  <Pool address={ethereumAcccounts[0]} chainId={chainId} />
                 </Route>
                 <Route path="/">
-                  <Convert
+                  <Swap
                     address={ethereumAcccounts[0]}
                     pushTransaction={pushTransaction}
                   />
                 </Route>
               </Switch>
             ) : (
-              <UnlockMetaMask />
+              <UnlockMetaMask
+                tokenAdded={tokenAdded}
+                setTokenAdded={setTokenAdded}
+              />
             )}
           </div>
         </div>

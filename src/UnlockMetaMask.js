@@ -1,42 +1,32 @@
-import { ethSwitchChain } from "./ethereum";
-export default function UnlockMetaMask() {
+import { connectToPolygon } from "./ethereum";
+
+export default function UnlockMetaMask(props) {
   return (
-    <div className="text-center">
-      <h2>Please Connect To a Supported Network</h2>
+    <div
+      className="text-center d-flex align-items-center justify-content-center "
+      style={{ marginTop: "80px" }}
+    >
       <div>
-      <div>
+        <h2>
+          Please Connect to the{" "}
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href="https://polygon.technology/"
+          >
+            Polygon
+          </a>{" "}
+          Network
+        </h2>
         <button
-          onClick={(e) => {
+          onClick={async (e) => {
             e.preventDefault();
-            ethSwitchChain("0x13881");
+            await connectToPolygon();
           }}
           className="btn btn-lg btn-primary mt-4"
           type="submit"
         >
-          Connect To Mumbai
-        </button>
-      </div>
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            ethSwitchChain("0x4");
-          }}
-          className="btn btn-lg btn-primary mt-4"
-          type="submit"
-        >
-          Connect To Rinkarby (Atrbitrum Testnet)
-        </button>
-      </div>
-      <div>
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            ethSwitchChain("0x4");
-          }}
-          className="btn btn-lg btn-primary mt-4"
-          type="submit"
-        >
-          Connect To Rinkeby
+          Connect To Polygon
         </button>
       </div>
     </div>

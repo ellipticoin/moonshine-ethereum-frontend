@@ -19,14 +19,14 @@ export default class ExchangeRateCalculator {
         return this.getBuyOutputAmount(inputAmount);
       case "sell":
         return this.getSellOutputAmount(inputAmount);
-      case "convert":
-        return this.getConvertOutputAmount(inputAmount);
+      case "swap":
+        return this.getSwapOutputAmount(inputAmount);
       default:
         throw new Error("Unexpected action");
     }
   }
 
-  getConvertOutputAmount(inputAmount) {
+  getSwapOutputAmount(inputAmount) {
     const baseTokenAmount = this.getSellOutputAmount(inputAmount);
     return this.getSellOutputAmount(baseTokenAmount);
   }

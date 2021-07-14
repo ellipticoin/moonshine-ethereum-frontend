@@ -1,43 +1,70 @@
-import TokenSelect from "../TokenSelect";
+import { ethers } from "ethers";
+import PoolSelect from "../PoolSelect";
 import ManageLiquidity from "./ManageLiquidity";
-import CreatePool from "./CreatePool";
-import { useBestPool, POOL } from "../contracts";
-import { useState, useEffect } from "react";
+import { useQueryEth } from "../ethereum";
+import { AMM } from "../contracts.js";
+import { useState } from "react";
+const {
+  constants: { AddressZero },
+  utils: { id, hexZeroPad },
+} = ethers;
 
 export default function Pool(props) {
-  const { address } = props;
-  const [token, setToken] = useState();
-  const [liquidityTokenBalance, setLiquidityTokenBalance] = useState();
-  const pool = useBestPool(token && token.address);
-  useEffect(() => {
-    async function fetchLiquidityTokenData() {
-      if (!pool.address) return;
-      const liquidityTokenBalance = await POOL.attach(pool.address).balanceOf(
-        address
-      );
-      setLiquidityTokenBalance(BigInt(liquidityTokenBalance.toString()));
-    }
-    fetchLiquidityTokenData();
-  });
+  const { address, chainId } = props;
+  const [poolId, setPoolId] = useState(0);
+  const pool = useQueryEth(
+    AMM,
+    (contract) => contract.pools(poolId),
+    [poolId],
+    [
+      [
+        id("AddLiquidity(address,uint256,int64)"),
+        id("RemoveLiquidity(address,uint256,int64)"),
+      ],
+      hexZeroPad(address, 32),
+    ]
+  );
+  const poolBalance = useQueryEth(
+    AMM,
+    async (contract) => contract.balances(poolId, address),
+    [poolId, address],
+    [
+      [
+        id("AddLiquidity(address,uint256,int64)"),
+        id("RemoveLiquidity(address,uint256,int64)"),
+      ],
+      hexZeroPad(address, 32),
+    ]
+  );
 
-  return (
+  return pool == null ? null : (
     <form className="d-flex  flex-column">
       <div className="row mb-2">
         <div className="col">
-          <TokenSelect
-            value={token}
-            onChange={(token) => setToken(token)}
-            placeholder="Token"
-            includeBaseToken={false}
+          <PoolSelect
+            value={poolId}
+            onChange={setPoolId}
+            placeholder="Token Pool"
           />
-          {liquidityTokenBalance > 0n ? (
+          {pool.address === AddressZero ||
+          pool.totalSupplyOfBaseToken === undefined ||
+          pool.totalSupplyOfToken === undefined ? (
+            <div
+              className="d-flex justify-content-center align-middle"
+              style={{ marginTop: 120, marginBottom: 120 }}
+            >
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          ) : (
             <ManageLiquidity
               address={address}
-              liquidityTokenBalance={liquidityTokenBalance}
+              chainId={chainId}
+              poolId={poolId}
+              poolBalance={poolBalance}
               pool={pool}
             />
-          ) : (
-            <CreatePool address={address} token={token} />
           )}
         </div>
       </div>
