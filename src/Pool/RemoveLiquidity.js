@@ -2,6 +2,8 @@ import { useState } from "react";
 import { AMM } from "../contracts.js";
 import NumberFormat from "react-number-format";
 import { proportionOf } from "../helpers";
+import Button from "../Button";
+import { getGasPrice } from "../polygon.js";
 const Input = (props) => (
   <div className="form-floating">
     <input
@@ -15,12 +17,20 @@ const Input = (props) => (
 );
 export default function RemoveLiquidity(props) {
   const { poolId, poolBalance } = props;
+  const [loading, setLoading] = useState(false);
   const [percentageToRemove, setPercentageToRemove] = useState(1000000n);
   const removeLiquidity = async () => {
-    await AMM.removeLiquidity(
-      poolId,
-      proportionOf(poolBalance, percentageToRemove, 1000000n)
-    );
+    setLoading(true);
+    try {
+      await AMM.removeLiquidity(
+        poolId,
+        proportionOf(poolBalance, percentageToRemove, 1000000n),
+        { gasPrice: await getGasPrice("fastest") }
+      );
+    } catch (err) {
+      if (err.data && err.data.message) alert(err.data.message);
+      if (err) console.log(err);
+    }
   };
   return (
     <div className="mt-4">
@@ -42,15 +52,16 @@ export default function RemoveLiquidity(props) {
       />
 
       <div className="d-grid gap-2 mt-4">
-        <button
+        <Button
           onClick={(e) => {
             e.preventDefault();
             removeLiquidity();
           }}
+          loading={loading}
           className="btn btn-primary btn-lg"
         >
           Remove Liquidity
-        </button>
+        </Button>
       </div>
     </div>
   );

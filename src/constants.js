@@ -3,6 +3,9 @@ export const BASE_TOKEN_DECIMALS = 6;
 export const DECIMALS = 6;
 export const MOONSHINE_DECIMALS = 6;
 export const POLYGON_CHAIN_ID = "0x89";
+export const ETHEREUM_CHAIN_ID = "0x1";
+export const POLYGON_BRIDGE_ADDRESS =
+  "0xA0c68C638235ee32657e8f720a23ceC1bFc77C77";
 export const TOKENS = [
   {
     symbol: "ETH",

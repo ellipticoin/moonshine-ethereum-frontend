@@ -24,11 +24,15 @@ export default function ManageLiquidity(props) {
     });
   });
 
+  console.log(poolBalance);
   return (
     <>
       {poolBalance > 0n ? (
-        <ul ref={tabsEl} className="nav nav-tabs nav-fill">
-          {poolBalance > 0n ? (
+        <>
+          <ul
+            ref={tabsEl}
+            className="nav nav-tabs nav-fill flex-column flex-sm-row"
+          >
             <li className="nav-item">
               <button
                 className="nav-link active"
@@ -39,20 +43,18 @@ export default function ManageLiquidity(props) {
                 Harvest
               </button>
             </li>
-          ) : null}
-          <li className="nav-item">
-            <button
-              className={classnames("nav-link", {
-                active: poolBalance === 0n,
-              })}
-              data-bs-target="#add-liquidity"
-              aria-current="page"
-              href="/"
-            >
-              Add Liquidity
-            </button>
-          </li>
-          {poolBalance > 0n ? (
+            <li className="nav-item">
+              <button
+                className={classnames("nav-link", {
+                  active: poolBalance === 0n,
+                })}
+                data-bs-target="#add-liquidity"
+                aria-current="page"
+                href="/"
+              >
+                Add Liquidity
+              </button>
+            </li>
             <li className="nav-item">
               <button
                 className="nav-link"
@@ -62,53 +64,50 @@ export default function ManageLiquidity(props) {
                 Remove Liquidity
               </button>
             </li>
-          ) : null}
-        </ul>
-      ) : null}
-      <div className="tab-content">
-        {poolBalance > 0n ? (
-          <div
-            className="tab-pane fade show active"
-            id="harvest"
-            role="tabpanel"
-            aria-labelledby="home-tab"
-          >
-            <Harvest
-              address={address}
-              chainId={chainId}
-              pool={pool}
-              poolId={poolId}
-              poolBalance={poolBalance}
-            />
+          </ul>
+          <div className="tab-content">
+            <div
+              className="tab-pane fade show active"
+              id="harvest"
+              role="tabpanel"
+              aria-labelledby="home-tab"
+            >
+              <Harvest
+                address={address}
+                chainId={chainId}
+                pool={pool}
+                poolId={poolId}
+                poolBalance={poolBalance}
+              />
+            </div>
+            <div
+              className={classnames(
+                "tab-pane",
+                "fade",
+                { active: poolBalance === 0n },
+                { show: poolBalance === 0n }
+              )}
+              id="add-liquidity"
+              role="tabpanel"
+              aria-labelledby="profile-tab"
+            ></div>
+            <div
+              className="tab-pane fade"
+              id="remove-liquidity"
+              role="tabpanel"
+              aria-labelledby="messages-tab"
+            >
+              <RemoveLiquidity
+                poolBalance={poolBalance}
+                address={address}
+                poolId={poolId}
+              />
+            </div>
           </div>
-        ) : null}
-        <div
-          className={classnames(
-            "tab-pane",
-            "fade",
-            { active: poolBalance === 0n },
-            { show: poolBalance === 0n }
-          )}
-          id="add-liquidity"
-          role="tabpanel"
-          aria-labelledby="profile-tab"
-        >
-          <AddLiquidity address={address} poolId={poolId} pool={pool} />
-        </div>
-        <div
-          className="tab-pane fade"
-          id="remove-liquidity"
-          role="tabpanel"
-          aria-labelledby="messages-tab"
-        >
-          {poolBalance > 0n ? (
-          <RemoveLiquidity
-            poolBalance={poolBalance}
-            address={address}
-            poolId={poolId}
-          />): null}
-        </div>
-      </div>
+        </>
+      ) : (
+        <AddLiquidity address={address} poolId={poolId} pool={pool} />
+      )}
     </>
   );
 }

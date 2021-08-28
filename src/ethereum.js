@@ -3,8 +3,7 @@ import { ethers } from "ethers";
 import { ERC20 } from "./contracts";
 import { POLYGON_CHAIN_ID } from "./constants";
 import { useInterval } from "./helpers";
-import { AMM } from "./contracts";
-import _ from "lodash";
+import { AMM, PROVIDER } from "./contracts";
 
 const {
   BigNumber,
@@ -111,20 +110,25 @@ export function useMetaMaskIsConnected() {
 export function useChainId() {
   const [chainId, setChainId] = useState(null);
   useEffect(() => {
+    if (!window.ethereum) return;
     async function fetchChainId() {
       if (window.ethereum) {
         setChainId(await window.ethereum.request({ method: "eth_chainId" }));
       }
     }
     fetchChainId();
-    window.ethereum.on("chainChanged", setChainId);
+    window.ethereum.on("chainChanged", (chainId) => {
+      setChainId(chainId);
+    });
   }, []);
+
   return chainId;
 }
 
 export function useEthereumAccounts() {
   const [ethereumAccounts, setEthereumAccounts] = useState();
   useEffect(() => {
+    if (!window.ethereum) return;
     async function fetchEthereumAccounts() {
       if (window.ethereum) {
         setEthereumAccounts(
@@ -141,38 +145,68 @@ export function useEthereumAccounts() {
   }, []);
   return ethereumAccounts;
 }
-export async function connectToPolygon() {
+export async function switchChain(chainId) {
+  await window.ethereum.request({
+    method: "wallet_switchEthereumChain",
+    params: [{ chainId }],
+  });
+}
+export async function switchToPolygon(address) {
   try {
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: "0x89" }],
     });
   } catch (switchError) {
-    // This error code indicates that the chain has not been added to MetaMask.
-    if (switchError.code === 4902) {
+    if (switchError.code === 4902 || switchError.code === -32603) {
       try {
         await window.ethereum.request({
           method: "wallet_addEthereumChain",
           params: [
             {
               chainId: "0x89",
-              chainName: "Matic Mainnet",
-              rpcUrls: ["https://rpc-mainnet.maticvigil.com/"],
-              blockExplorerUrls: ["https://polygonscan.com/"],
+              chainName: "Matic(Polygon) Mainnet",
+              nativeCurrency: {
+                name: "Matic",
+                symbol: "MATIC",
+                decimals: 18,
+              },
+              rpcUrls: ["https://polygon.moonshine.exchange/"],
+              blockExplorerUrls: ["https://polygonscan.com"],
             },
+            address,
           ],
         });
-      } catch (addError) {
-        // handle "add" error
-      }
+      } catch (addError) {}
     }
-    // handle other "switch" errors
   }
   await ethRequestAccounts();
 }
 
 export async function ethRequestAccounts() {
   return window.ethereum.request({ method: "eth_requestAccounts" });
+}
+
+export function addListener(filter, f) {
+  if (
+    window.ethereumListeners &&
+    window.ethereumListeners[JSON.stringify(filter)]
+  ) {
+    return window.ethereumListeners[JSON.stringify(filter)].push(f);
+  } else {
+    window.ethereumListeners[JSON.stringify(filter)] = [f];
+    PROVIDER.on(filter, (result) => {
+      window.ethereumListeners[JSON.stringify(filter)].map((f) => f(result));
+    });
+  }
+}
+export function removeListener(filter, listenerId) {
+  if (filter) {
+    window.ethereumListeners[JSON.stringify(filter)].splice(listenerId, 1);
+  }
+  if (window.ethereumListeners[JSON.stringify(filter)].length === 0) {
+    PROVIDER.off(filter);
+  }
 }
 
 export function useQueryEth(contract, f, dependencies = [], topics) {
@@ -190,14 +224,17 @@ export function useQueryEth(contract, f, dependencies = [], topics) {
     }
     let filter,
       listener,
+      listenerId,
       isCancelled = false;
     async function subscribeToEvents() {
       filter = {
         address: contract.address,
         topics,
       };
-      listener = (result) => {
-      // console.log(result)
+      listener = async (result) => {
+        while ((await contract.provider.getBlock()) < result.blockNumber + 1) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
         try {
           f(contract.attach(contract.address)).then((newReturnValue) => {
             updateReturnValue(
@@ -209,14 +246,9 @@ export function useQueryEth(contract, f, dependencies = [], topics) {
           });
         } catch (e) {
           console.log(e);
-          // no-op
         }
       };
-      // console.log("push");
-      // console.log(filter);
-      window.subscriptions.push(filter);
-      // console.log(window.subscriptions);
-      contract.provider.on(filter, listener);
+      listenerId = addListener(filter, listener);
     }
     if (topics) {
       subscribeToEvents();
@@ -231,15 +263,9 @@ export function useQueryEth(contract, f, dependencies = [], topics) {
     });
     return () => {
       isCancelled = true;
-      // console.log("remove");
-      // console.log(filter);
       if (filter) {
-        contract.provider.off(filter, listener);
+        removeListener(filter, listenerId);
       }
-      const index = _.findIndex(window.subscriptions, (subscription) =>
-        _.isEqual(subscription, filter)
-      );
-      window.subscriptions.splice(index, 1);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chainId, contract.address, ...dependencies]);

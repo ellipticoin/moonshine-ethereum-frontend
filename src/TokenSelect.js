@@ -81,7 +81,7 @@ export default function TokenSelect(props) {
       <Select
         placeholder={placeholder}
         components={{ Option: IconOption, SingleValue: IconSingleValue }}
-        options={tokens}
+        options={props.tokens || tokens}
         filterOption={filterOption}
         onChange={(selection) => {
           onChange({

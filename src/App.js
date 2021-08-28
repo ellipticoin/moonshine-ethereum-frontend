@@ -1,8 +1,12 @@
 import "./App.css";
 import logo from "./logo.svg";
-import { PROD, POLYGON_CHAIN_ID } from "./constants";
+import { switchToPolygon } from "./ethereum";
+import { PROD, POLYGON_CHAIN_ID, ETHEREUM_CHAIN_ID } from "./constants";
+import classNames from "classnames";
 import { MSX } from "./contracts";
+import { useRef } from "react";
 import {
+  switchChain,
   useEthereumAccounts,
   ethRequestAccounts,
   useMetaMaskIsConnected,
@@ -10,15 +14,19 @@ import {
 import Swap from "./Swap";
 import Toast from "./Toast";
 import Mint from "./Mint";
+import Deposit from "./Deposit";
 import UnlockMetaMask from "./UnlockMetaMask";
+import InstallMetaMask from "./InstallMetaMask";
 import Pool from "./Pool/index";
 import UserAddress from "./UserAddress";
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useCollapse } from "./react-bootstrap.js";
 import { useLocalStorage } from "./helpers";
 import { useChainId } from "./ethereum";
 
 function App() {
+  const [menuIsOpen, setMenuIsOpen] = useState(false);
   const [tokenAdded, setTokenAdded] = useLocalStorage("tokenAdded", false);
   const ethereumAcccounts = useEthereumAccounts();
   const chainId = useChainId();
@@ -27,6 +35,8 @@ function App() {
   const pushTransaction = (transaction) => {
     setTransactions([...transactions, transaction]);
   };
+  const menuEl = useRef(null);
+  useCollapse(menuEl, menuIsOpen);
   useEffect(() => {
     async function addToken() {
       try {
@@ -67,17 +77,25 @@ function App() {
           <button
             className="navbar-toggler"
             type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarNav"
+            onClick={() => setMenuIsOpen(!menuIsOpen)}
             aria-controls="navbarNav"
             aria-expanded="false"
             aria-label="Toggle navigation"
           >
             <span className="navbar-toggler-icon"></span>
           </button>
-          <div className="collapse navbar-collapse" id="navbarNav">
+          <div
+            ref={menuEl}
+            className={classNames([
+              "collapse",
+              "navbar-collapse",
+              { menuIsOpen: "show" },
+            ])}
+            id="navbarNav"
+          >
             <ul className="navbar-nav">
-              <li className="nav-item">
+             {chainId === POLYGON_CHAIN_ID ? (
+              <><li className="nav-item">
                 <Link className="nav-link" to="/">
                   Swap
                 </Link>
@@ -86,6 +104,29 @@ function App() {
                 <Link className="nav-link" to="/pool">
                   Pool
                 </Link>
+              </li></>): 
+              <li className="nav-item">
+                <button className="nav-link">
+                  Bridge
+                </button>
+              </li>
+ }
+              <li className="nav-item d-block d-sm-none">
+                {chainId === POLYGON_CHAIN_ID ? (
+                  <button
+                    onClick={() => switchChain(ETHEREUM_CHAIN_ID)}
+                    className="nav-link"
+                  >
+                    Switch To Ethereum
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => switchToPolygon(ethereumAcccounts[0])}
+                    className="nav-link"
+                  >
+                    Switch To Polygon
+                  </button>
+                )}
               </li>
               {!PROD && (
                 <li className="nav-item">
@@ -98,10 +139,10 @@ function App() {
             </ul>
           </div>
         </div>
-        {metamaskIsConnected && tokenAdded ? (
+        {ethereumAcccounts && ethereumAcccounts[0] ? (
           <UserAddress
             metamaskIsConnected={metamaskIsConnected}
-            address={metamaskIsConnected && ethereumAcccounts[0]}
+            address={ethereumAcccounts[0]}
             chainId={chainId}
             ethRequestAccounts={ethRequestAccounts}
           />
@@ -114,11 +155,11 @@ function App() {
         className="bg-dark position-relative bd-example-toasts"
       >
         <div
-          className="toast-container position-absolute p-3 w-100"
+          className="toast-container d-none d-lg-block position-absolute p-3 w-100"
           id="toastPlacement"
         >
           {transactions.map((transaction, i) => (
-            <Toast key={i}>
+            <Toast className="d-none d-lg-block" key={i}>
               <div>{transaction.text}</div>
               <div>
                 <a
@@ -134,7 +175,7 @@ function App() {
         </div>
       </div>
       <div>
-        <div className="jumbotron vertical-center">
+        <div className="jumbotron">
           <div className="container p-3">
             {metamaskIsConnected === null && !tokenAdded ? (
               <div
@@ -160,11 +201,14 @@ function App() {
                   />
                 </Route>
               </Switch>
+            ) : window.ethereum ? (
+              chainId === ETHEREUM_CHAIN_ID && ethereumAcccounts[0] ? (
+                <Deposit address={ethereumAcccounts[0]} />
+              ) : (
+                <UnlockMetaMask />
+              )
             ) : (
-              <UnlockMetaMask
-                tokenAdded={tokenAdded}
-                setTokenAdded={setTokenAdded}
-              />
+              <InstallMetaMask />
             )}
           </div>
         </div>
@@ -172,46 +216,5 @@ function App() {
     </Router>
   );
 }
-// <nav className="navbar fixed-top navbar-expand-lg">
-//   <div className="container-fluid">
-//     <img alt="" style={{ width: "50px" }} src={logo} />
-//
-//     <button
-//       className="navbar-toggler"
-//       type="button"
-//       data-toggle="collapse"
-//       data-target="#navbarSupportedContent"
-//       aria-controls="navbarSupportedContent"
-//       aria-expanded="false"
-//       aria-label="Toggle navigation"
-//     >
-//       <span className="navbar-toggler-icon"></span>
-//     </button>
-//     <div
-//       className="collapse navbar-collapse"
-//       id="navbarSupportedContent"
-//     >
-//       <ul className="navbar-nav mr-auto mb-2 mb-lg-0">
-//         <li className="nav-item">
-//           <Link className="nav-link" to="/">
-//             Swap
-//           </Link>
-//         </li>
-//         <li className="nav-item">
-//           <Link className="nav-link" to="/">
-//             Pool
-//           </Link>
-//         </li>
-//         {!PROD && (
-//           <li className="nav-item">
-//             <Link className="nav-link" to="/">
-//               Mint
-//             </Link>
-//           </li>
-//         )}
-//       </ul>
-//     </div>
-//   </div>
-// </nav>
 
 export default App;

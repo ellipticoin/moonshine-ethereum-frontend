@@ -9,6 +9,7 @@ import {
 } from "quickswap-sdk";
 import { USDC, SIGNER } from "./contracts";
 import { ethers } from "ethers";
+import { getGasPrice } from "./polygon.js";
 const UniswapV2Router02JSON = require("@uniswap/v2-periphery/build/UniswapV2Router02.json");
 const MAX_SLIPPAGE = new Percent("50", "10000"); // 50 bips, or 0.50%
 export const QUICKSWAP_ROUTER = new ethers.Contract(
@@ -35,6 +36,7 @@ export async function executeQuickswapSwap(
     await SIGNER.getAddress(),
     deadline,
     {
+      gasPrice: await getGasPrice("fastest"),
       gasLimit: 300000,
     }
   );
@@ -47,6 +49,7 @@ export async function executeQuickswapSwap(
     await SIGNER.getAddress(),
     deadline,
     {
+      gasPrice: await getGasPrice("fastest"),
       gasLimit: 300000,
     }
   );
@@ -70,13 +73,14 @@ export async function fetchOutputAmount(
   return trade.minimumAmountOut(MAX_SLIPPAGE).raw.toString();
 }
 
-function scaleUpTokenAmount(token, amount) {
+export function scaleUpTokenAmount(token, amount) {
+  console.log(token)
   if (token.decimals > 6) {
-    return Number(amount) * 10 ** (token.decimals - 6);
-  } else if (token.decimals < 6) {
-    return Number(amount) / 10 ** (6 - token.decimals);
+    return BigInt(Number(amount) * 10 ** (Number(token.decimals) - 6));
+  } else if (token.decimals < 6n) {
+    return BigInt(Number(amount) / 10 ** (6 - Number(token.decimals)));
   } else {
-    return Number(amount);
+    return BigInt(amount);
   }
 }
 

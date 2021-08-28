@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo } from "react";
 import TokenAmountInput from "../TokenAmountInput";
 import { ethers } from "ethers";
+import { getGasPrice } from "../polygon.js";
 import { AMM, ERC20, USDC } from "../contracts.js";
 import { proportionOf } from "../helpers";
 import { useQueryEth } from "../ethereum.js";
@@ -18,7 +19,7 @@ export default function AddLiquidity(props) {
   const baseTokenToAddRef = useRef(null);
   const [tokenToAdd, setTokenToAdd] = useState();
   const [baseTokenToAdd, setBaseTokenToAdd] = useState();
-  const [depositToSafe, setDepositToSafe] = useState(false)
+  const [depositToSafe, setDepositToSafe] = useState(false);
   const baseTokenAllowance = useQueryEth(
     USDC,
     async (contract) => {
@@ -38,7 +39,9 @@ export default function AddLiquidity(props) {
 
   const addLiquidity = async () => {
     setLoading(true);
-    const tx = await AMM.addLiquidity(poolId, tokenToAdd, depositToSafe);
+    const tx = await AMM.addLiquidity(poolId, tokenToAdd, depositToSafe, {
+      gasPrice: await getGasPrice("fastest"),
+    });
     try {
       await tx.wait();
     } catch (err) {
@@ -51,29 +54,33 @@ export default function AddLiquidity(props) {
   };
   const approveBaseToken = async () => {
     setLoading(true);
-    const tx = await USDC.approve(AMM.address, MaxUint256);
+    const tx = await USDC.approve(AMM.address, MaxUint256, {
+      gasPrice: await getGasPrice("fastest"),
+    });
     try {
       await tx.wait();
+      setLoading(false);
     } catch (err) {
       if (err.data && err.data.message) alert(err.data.message);
       if (err) console.log(err);
-
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const approveToken = async () => {
     setLoading(true);
     const tokenContract = ERC20.attach(pool.token);
-    const tx = await tokenContract.approve(AMM.address, MaxUint256);
+    const tx = await tokenContract.approve(AMM.address, MaxUint256, {
+      gasPrice: await getGasPrice("fastest"),
+    });
     try {
       await tx.wait();
+      setLoading(false);
     } catch (err) {
       if (err.data && err.data.message) alert(err.data.message);
       if (err) console.log(err);
-
+      setLoading(false);
     }
-    setLoading(false);
   };
   const baseTokenRequiresApproval = useMemo(
     () => baseTokenAllowance < baseTokenToAdd,
@@ -87,7 +94,7 @@ export default function AddLiquidity(props) {
   return (
     <div className="mt-4">
       <TokenAmountInput
-        label="Amount of Token to Add"
+        label="Token to Add"
         ref={tokenToAddRef}
         address={address}
         onChange={(tokenToAdd) => {
@@ -111,7 +118,7 @@ export default function AddLiquidity(props) {
         value={tokenToAdd}
       />
       <TokenAmountInput
-        label="Amount of USDC to Add"
+        label="USDC to Add"
         ref={baseTokenToAddRef}
         address={address}
         onChange={(baseTokenToAdd) => {
@@ -134,7 +141,17 @@ export default function AddLiquidity(props) {
         tokenAddress={USDC.address}
         value={baseTokenToAdd}
       />
-<div className="form-check"><input type="checkbox" onChange={() => setDepositToSafe(!depositToSafe)} checked={depositToSafe}  className="form-check-input" /><label title="" className="form-check-label">Deposit Directly To Safe</label></div>
+      <div className="form-check">
+        <input
+          type="checkbox"
+          onChange={() => setDepositToSafe(!depositToSafe)}
+          checked={depositToSafe}
+          className="form-check-input"
+        />
+        <label title="" className="form-check-label">
+          Deposit Directly To Safe
+        </label>
+      </div>
 
       <div className="d-grid gap-2 mt-4">
         <DepositButton

@@ -18,7 +18,7 @@ import { TOKENS } from "./constants";
 import { capitalize } from "lodash";
 
 const {
-  utils: { formatUnits },
+  utils: { formatUnits, id, hexZeroPad },
   constants: { MaxUint256, AddressZero },
 } = ethers;
 
@@ -30,7 +30,7 @@ export default function Swap(props) {
   });
   const previousInputToken = usePrevious(inputToken);
   const previousOutputToken = usePrevious(outputToken);
-  const [inputAmount, setInputAmount] = useState(1000000n);
+  const [inputAmount, setInputAmount] = useState();
   const [loading, setLoading] = useState(false);
   const [outputAmount, setOutputAmount] = useState();
   const [action, setAction] = useState();
@@ -42,7 +42,8 @@ export default function Swap(props) {
     async (contract) => {
       return contract.allowance(address, QUICKSWAP_ROUTER.address);
     },
-    [address]
+    [address],
+    [id("Approval(address,address,uint256)"), hexZeroPad(address, 32), null]
   );
   const inputTokenRequiresApproval = useMemo(
     () => inputTokenAllowance < inputAmount,
@@ -77,9 +78,8 @@ export default function Swap(props) {
     } catch (err) {
       if (err.data && err.data.message) alert(err.data.message);
       if (err) console.log(err);
-
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -145,7 +145,7 @@ export default function Swap(props) {
   return (
     <form className="d-flex  flex-column">
       <div className="row">
-        <div className="col">
+        <div className="col-sm-12 col-lg-6">
           <TokenSelect
             chainId={chainId}
             onChange={(token) => setInputToken(token)}
@@ -154,7 +154,7 @@ export default function Swap(props) {
             placeholder="Input token"
           />
         </div>
-        <div className="col">
+        <div className="col-sm-12 col-lg-6">
           <TokenAmountInput
             label="Input Amount"
             ref={inputAmountRef}
@@ -178,7 +178,6 @@ export default function Swap(props) {
               }}
               className="balance"
             >
-              Balance:{" "}
               <TokenAmount decimals={outputDecimals}>
                 {outputBalance}
               </TokenAmount>

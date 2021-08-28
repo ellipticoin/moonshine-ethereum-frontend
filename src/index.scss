@@ -18,7 +18,22 @@ body {
   background-size: cover;
   /* background: #70bg32; */
   background-repeat: no-repeat;
+  background: #fff;
+}
+
+.navbar {
+  background-size: 100% 640px;
+  background-repeat: no-repeat;
   background: radial-gradient(#7baafd 10%, #2362d1 100%);
+}
+
+@media (min-width: 768px) {
+  body {
+    background: radial-gradient(#7baafd 10%, #2362d1 100%);
+  }
+  .navbar {
+    background: none;
+  }
 }
 
 @mixin buttonStyle($color) {
@@ -93,13 +108,35 @@ nav {
   font-size: 1.2rem;
 }
 
+.dropdown-menu .nav-link {
+  width: 200px;
+}
+
+.nav-link {
+  background-color: transparent;
+  outline: none;
+  border: none;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
 
-.jumbotron.vertical-center {
-  margin-bottom: 0; /* Remove the default bottom margin of .jumbotron */
+.jumbotron {
+  background-color: #fff;
+  min-height: none;
+  align-items: initial;
+  justify-content: initial;
+}
+@media (min-width: 768px) {
+  .jumbotron {
+    background-color: transparent;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .vertical-center {
@@ -113,9 +150,8 @@ code {
 .container {
   border-radius: 10px;
   background-color: #fff;
-  min-height: 300px;
 }
 
-.navbar {
-  background: none;
-}
+// .navbar {
+//   background: none;
+// }
