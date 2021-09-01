@@ -90,7 +90,9 @@ export default function ManageLiquidity(props) {
               id="add-liquidity"
               role="tabpanel"
               aria-labelledby="profile-tab"
-            ></div>
+            >
+        <AddLiquidity address={address} poolId={poolId} pool={pool} />
+</div>
             <div
               className="tab-pane fade"
               id="remove-liquidity"
