@@ -1,5 +1,5 @@
 import ExchangeRateCalculator from "./ExchangeRateCalculator";
-import { ethers, BigNumber } from "ethers";
+import { ethers } from "ethers";
 
 const {
   utils: { parseUnits },

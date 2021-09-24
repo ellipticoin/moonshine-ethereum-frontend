@@ -3,6 +3,7 @@ import PoolSelect from "../PoolSelect";
 import ManageLiquidity from "./ManageLiquidity";
 import { useQueryEth } from "../ethereum";
 import { AMM } from "../contracts.js";
+import Loading from "../Loading";
 import { useState } from "react";
 const {
   constants: { AddressZero },
@@ -37,7 +38,9 @@ export default function Pool(props) {
     ]
   );
 
-  return pool == null ? null : (
+  return pool == null || !address ? (
+    <Loading height={400} />
+  ) : (
     <form className="d-flex  flex-column">
       <div className="row mb-2">
         <div className="col">

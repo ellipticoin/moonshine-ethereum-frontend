@@ -1,50 +1,14 @@
 import { components as reactSelectComponents } from "react-select";
 import Select from "react-select";
-import { PROD } from "./constants";
-import rinkarbyTokenList from "./rinkarbyTokenList.json";
-import rinkebyTokenList from "./rinkebyTokenList.json";
-import mumbaiTokenList from "./mumbaiTokenList.json";
-import polygonTokenList from "./polygonTokenList.json";
-import React, { useEffect, useState } from "react";
+import { TOKENS } from "./constants";
+import React from "react";
 
-const tokenOptions = async (includeBaseToken) => {
-  const tokens = PROD
-    ? await fetch(
-        "https://unpkg.com/quickswap-default-token-list@1.0.91/build/quickswap-default.tokenlist.json"
-      )
-        .then((response) => response.json())
-        .then(({ tokens }) => tokens)
-    : await developmentTokenList();
-
-  return tokens
-    .filter(
-      ({ name, chainId, symbol }) =>
-        // name.toLowerCase().includes(inputValue.toLowerCase()) &&
-        (!PROD || chainId === 137) &&
-        (includeBaseToken === undefined || symbol !== "USDC")
-    )
-    .map(({ address, logoURI, symbol, name }, index) => ({
-      id: (index + 1).toString(),
-      name,
-      icon: logoURI,
-      label: symbol,
-      value: address,
-    }));
-};
-const developmentTokenList = async () => {
-  const chainId = await window.ethereum.request({ method: "eth_chainId" });
-  switch (chainId) {
-    case "0x66eeb":
-      return rinkarbyTokenList;
-    case "0x4":
-      return rinkebyTokenList;
-    case "0x13881":
-      return mumbaiTokenList;
-    case "0x89":
-      return polygonTokenList;
-    default:
-  }
-};
+const OPTIONS = TOKENS.map((token, index) => ({
+  name: token.name,
+  label: token.ticker,
+  icon: token.logoURI,
+  value: token.address,
+}));
 
 const styles = {
   control: (provided) => ({
@@ -54,34 +18,23 @@ const styles = {
     fontSize: "1rem",
   }),
 };
+
 function filterOption({ label, chainId, value, data }, inputValue) {
   return (
     label.toLowerCase().includes(inputValue.toLowerCase()) ||
     data.name.toLowerCase().includes(inputValue.toLowerCase())
   );
 }
+
 export default function TokenSelect(props) {
-  const { onChange, includeBaseToken, placeholder } = props;
-  const [tokens, setTokens] = useState([]);
-  useEffect(() => {
-    let isCancelled = false;
-    async function fetchTokens() {
-      const newTokens = await tokenOptions(includeBaseToken);
-      if (!isCancelled) {
-        setTokens(newTokens);
-      }
-    }
-    fetchTokens();
-    return () => {
-      isCancelled = true;
-    };
-  }, [includeBaseToken]);
-  return tokens.length ? (
+  const { onChange, placeholder } = props;
+
+  return (
     <div className="mb-3">
       <Select
         placeholder={placeholder}
         components={{ Option: IconOption, SingleValue: IconSingleValue }}
-        options={props.tokens || tokens}
+        options={props.tokens || OPTIONS}
         filterOption={filterOption}
         onChange={(selection) => {
           onChange({
@@ -89,11 +42,17 @@ export default function TokenSelect(props) {
             ticker: selection.label,
           });
         }}
-        value={tokens.find(({ value }) => value === props.value) || null}
+        value={
+          OPTIONS.find(({ value }) =>
+            value.toLowerCase() === props.value
+              ? props.value.toLowerCase()
+              : null
+          ) || null
+        }
         styles={styles}
       />
     </div>
-  ) : null;
+  );
 }
 
 const { Option, SingleValue } = reactSelectComponents;

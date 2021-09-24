@@ -10,7 +10,7 @@ export default function ManageLiquidity(props) {
   const tabsEl = useRef(null);
 
   useEffect(() => {
-    if ([undefined, 0n].includes(poolBalance)) return;
+    if ([undefined, null, 0n].includes(poolBalance)) return;
     var triggerTabList = [].slice.call(
       tabsEl.current.querySelectorAll("button")
     );
@@ -24,7 +24,6 @@ export default function ManageLiquidity(props) {
     });
   });
 
-  console.log(poolBalance);
   return (
     <>
       {poolBalance > 0n ? (
@@ -91,8 +90,8 @@ export default function ManageLiquidity(props) {
               role="tabpanel"
               aria-labelledby="profile-tab"
             >
-        <AddLiquidity address={address} poolId={poolId} pool={pool} />
-</div>
+              <AddLiquidity address={address} poolId={poolId} pool={pool} />
+            </div>
             <div
               className="tab-pane fade"
               id="remove-liquidity"

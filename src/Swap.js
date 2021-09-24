@@ -3,16 +3,16 @@ import { usePrevious } from "./helpers";
 import { ArrowDown } from "react-feather";
 import TokenAmountInput from "./TokenAmountInput";
 import TokenAmount from "./TokenAmount";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ERC20 } from "./contracts";
 import {
-  fetchOutputAmount,
-  executeQuickswapSwap,
   QUICKSWAP_ROUTER,
+  executeQuickswapSwap,
+  fetchOutputAmount,
 } from "./quickswap";
 import { ethers } from "ethers";
 import { useCollapse } from "./react-bootstrap.js";
-import { useQueryEth, useChainId } from "./ethereum.js";
+import { useChainId, useQueryEth } from "./ethereum.js";
 import Button from "./Button";
 import { TOKENS } from "./constants";
 import { capitalize } from "lodash";
@@ -34,7 +34,7 @@ export default function Swap(props) {
   const [loading, setLoading] = useState(false);
   const [outputAmount, setOutputAmount] = useState();
   const [action, setAction] = useState();
-  const transactionDetailsEl = useRef(null);
+  // const transactionDetailsEl = useRef(null);
   const inputAmountRef = useRef(null);
   const chainId = useChainId();
   const inputTokenAllowance = useQueryEth(
@@ -52,12 +52,12 @@ export default function Swap(props) {
 
   const inputDecimals = useQueryEth(
     ERC20.attach(inputToken.address),
-    async (contract) => contract.decimals(),
+    async (contract) => 6,
     [inputToken]
   );
   const outputDecimals = useQueryEth(
     ERC20.attach(outputToken.address),
-    async (contract) => contract.decimals(),
+    async (contract) => 6,
     [outputToken]
   );
   const outputBalance = useQueryEth(
@@ -119,7 +119,8 @@ export default function Swap(props) {
     setOutputToken({ address: AddressZero });
     inputAmountRef.current.setRawValue("");
   };
-  useCollapse(transactionDetailsEl, outputToken !== undefined);
+  const transactionDetailsRef = useCollapse(outputToken !== undefined);
+  // useCollapse(transactionDetailsEl, outputToken !== undefined);
   useEffect(() => {
     if (
       !previousOutputToken ||
@@ -191,7 +192,7 @@ export default function Swap(props) {
           />
         </div>
       </div>
-      <div ref={transactionDetailsEl} className="list-group mb-3 collapse">
+      <div ref={transactionDetailsRef} className="list-group mb-3 collapse">
         <div className="list-group-item" aria-current="true">
           <div className="d-flex w-100 justify-content-between">
             <strong className="mb-1">Protocol Fee</strong>

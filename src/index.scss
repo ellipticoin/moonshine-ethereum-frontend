@@ -1,10 +1,15 @@
+@import url("~bootstrap/dist/css/bootstrap.css");
+@import url("https://fonts.googleapis.com/css2?family=Montserrat&display=swap");
 $colorSuccess: #33bb33;
-$colorError: red;
+$colorDanger: red;
 $colorPrimary: #0d6efd;
 $colorLight: #f8f9fa;
 html {
   height: 100%;
 }
+// th, td {
+//   display: flex;
+// }
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
@@ -21,6 +26,32 @@ body {
   background: #fff;
 }
 
+header {
+  padding: 10px;
+  border-bottom: 1px solid #999;
+  display: flex;
+  justify-content: space-between;
+  h1 {
+    font-family: "Montserrat";
+    display: flex;
+    font-size: 24px;
+    color: #334152;
+    margin: 0;
+  }
+}
+h2 {
+  font-family: "Montserrat";
+  font-size: 18px;
+  color: #334152;
+  padding: 10px;
+  margin: 0;
+  border-bottom: 1px solid #999;
+}
+
+.container {
+  margin-top: 20px;
+  padding: 0;
+}
 .navbar {
   background-size: 100% 640px;
   background-repeat: no-repeat;
@@ -34,6 +65,21 @@ body {
   .navbar {
     background: none;
   }
+}
+
+.table {
+  margin-bottom: 0;
+  th {
+    vertical-align: middle;
+  }
+}
+
+.table > :not(caption) > * > * {
+  border-bottom-width: 0;
+}
+th,
+td {
+  white-space: nowrap;
 }
 
 @mixin buttonStyle($color) {
@@ -90,13 +136,16 @@ body {
   @include buttonStyle($colorSuccess);
 }
 
-.btn.btn-light {
-  @include buttonStyle($colorLight);
+.modal .btn {
+  margin: 0 10px;
 }
+// .btn.btn-light {
+//   @include buttonStyle($colorLight);
+// }
 
-.btn.btn-error {
+.btn.btn-danger {
   color: #fff;
-  @include buttonStyle($colorError);
+  @include buttonStyle($colorDanger);
 }
 
 nav {
@@ -129,6 +178,10 @@ code {
   align-items: initial;
   justify-content: initial;
 }
+td,
+th {
+  display: table-row;
+}
 @media (min-width: 768px) {
   .jumbotron {
     background-color: transparent;
@@ -136,6 +189,10 @@ code {
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+  td,
+  th {
+    display: table-cell;
   }
 }
 
@@ -147,11 +204,32 @@ code {
   justify-content: center;
 }
 
+.table-wrapper {
+  padding: 0;
+  margin: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
 .container {
+  padding: 10px;
   border-radius: 10px;
   background-color: #fff;
+  max-width: 90%;
 }
 
+th {
+  color: #3e4b5b;
+  font-family: "Montserrat";
+  font-size: 12px;
+  text-transform: uppercase;
+}
+.table > :not(:last-child) > :last-child > * {
+  border-bottom: 1px solid #999;
+}
+
+.modal-footer {
+  justify-content: space-between;
+}
 // .navbar {
 //   background: none;
 // }
