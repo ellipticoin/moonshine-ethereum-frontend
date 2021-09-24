@@ -1,7 +1,12 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { ERC20 } from "./contracts";
-import { POLYGON_CHAIN_ID } from "./constants";
+import {
+  CHAIN_INFO,
+  POLYGON_CHAIN_ID,
+  POLYGON_PROVIDER,
+  SIGNER,
+} from "./constants";
 import { useInterval } from "./helpers";
 import { AMM, PROVIDER } from "./contracts";
 
@@ -43,6 +48,7 @@ export function useBlockNumber() {
         subscriptionId = newSubscriptionId;
       });
     window.ethereum.on("message", ({ data }) => {
+      console.log(data.result);
       setBlockNumber(convertToNative(BigNumber.from(data.result.number)));
     });
     return () => {
@@ -98,7 +104,7 @@ function convertToNative(value) {
 }
 
 export function useMetaMaskIsConnected() {
-  const ethereumAcccounts = useEthereumAccounts();
+  const ethereumAcccounts = useEthereumAddress();
   const chainId = useChainId();
   return (
     ethereumAcccounts &&
@@ -125,59 +131,48 @@ export function useChainId() {
   return chainId;
 }
 
-export function useEthereumAccounts() {
-  const [ethereumAccounts, setEthereumAccounts] = useState();
+export function useEthereumAddress() {
+  const [ethereumAddress, setEthereumAddress] = useState();
   useEffect(() => {
     if (!window.ethereum) return;
-    async function fetchEthereumAccounts() {
+    async function fetchEthereumAddress() {
       if (window.ethereum) {
-        setEthereumAccounts(
+        setEthereumAddress(
           (await window.ethereum.request({ method: "eth_accounts" })).map(
             getAddress
-          )
+          )[0]
         );
       }
     }
-    fetchEthereumAccounts();
+    fetchEthereumAddress();
     window.ethereum.on("accountsChanged", (accounts) =>
-      setEthereumAccounts(accounts.map(getAddress))
+      setEthereumAddress(accounts.map(getAddress)[0])
     );
   }, []);
-  return ethereumAccounts;
+  return ethereumAddress;
 }
 export async function switchChain(chainId) {
-  await window.ethereum.request({
-    method: "wallet_switchEthereumChain",
-    params: [{ chainId }],
-  });
-}
-export async function switchToPolygon(address) {
   try {
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
-      params: [{ chainId: "0x89" }],
+      params: [{ chainId }],
     });
   } catch (switchError) {
     if (switchError.code === 4902 || switchError.code === -32603) {
       try {
-        await window.ethereum.request({
-          method: "wallet_addEthereumChain",
-          params: [
-            {
-              chainId: "0x89",
-              chainName: "Matic(Polygon) Mainnet",
-              nativeCurrency: {
-                name: "Matic",
-                symbol: "MATIC",
-                decimals: 18,
-              },
-              rpcUrls: ["https://polygon.moonshine.exchange/"],
-              blockExplorerUrls: ["https://polygonscan.com"],
-            },
-            address,
-          ],
-        });
-      } catch (addError) {}
+        console.log("ya");
+        console.log(CHAIN_INFO[chainId].params);
+        console.log(
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [CHAIN_INFO[chainId].params],
+          })
+        );
+        console.log("done");
+      } catch (addError) {
+        console.log("err");
+        console.log(addError);
+      }
     }
   }
   await ethRequestAccounts();
@@ -187,7 +182,7 @@ export async function ethRequestAccounts() {
   return window.ethereum.request({ method: "eth_requestAccounts" });
 }
 
-export function addListener(filter, f) {
+export function addListener(provider, filter, f) {
   if (
     window.ethereumListeners &&
     window.ethereumListeners[JSON.stringify(filter)]
@@ -195,7 +190,7 @@ export function addListener(filter, f) {
     return window.ethereumListeners[JSON.stringify(filter)].push(f);
   } else {
     window.ethereumListeners[JSON.stringify(filter)] = [f];
-    PROVIDER.on(filter, (result) => {
+    provider.on(filter, (result) => {
       window.ethereumListeners[JSON.stringify(filter)].map((f) => f(result));
     });
   }
@@ -212,12 +207,10 @@ export function removeListener(filter, listenerId) {
 export function useQueryEth(contract, f, dependencies = [], topics) {
   const [returnValue, setReturnValue] = useState(null);
   const chainId = useChainId();
+  const provider =
+    chainId === POLYGON_CHAIN_ID ? SIGNER.provider : POLYGON_PROVIDER;
 
   useEffect(() => {
-    if (chainId !== POLYGON_CHAIN_ID) {
-      setReturnValue(undefined);
-      return null;
-    }
     if (contract.address === AddressZero) {
       setReturnValue(undefined);
       return null;
@@ -232,7 +225,7 @@ export function useQueryEth(contract, f, dependencies = [], topics) {
         topics,
       };
       listener = async (result) => {
-        while ((await contract.provider.getBlock()) < result.blockNumber + 1) {
+        while ((await provider.getBlock()) < result.blockNumber + 1) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }
         try {
@@ -248,7 +241,7 @@ export function useQueryEth(contract, f, dependencies = [], topics) {
           console.log(e);
         }
       };
-      listenerId = addListener(filter, listener);
+      listenerId = addListener(contract.provider, filter, listener);
     }
     if (topics) {
       subscribeToEvents();
@@ -279,8 +272,6 @@ export function updateReturnValue(
   newReturnValue
 ) {
   if (!isCancelled) {
-    // console.log(newReturnValue)
-    // console.log(newReturnValue.length)
     if (newReturnValue.length) {
       const oldReturnValue = returnValue || {};
       const newObject = Object.fromEntries(
@@ -293,34 +284,5 @@ export function updateReturnValue(
     } else {
       setReturnValue(convertToNative(newReturnValue));
     }
-  }
-}
-
-export async function ethSwitchChain(chainId) {
-  try {
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId }],
-    });
-  } catch (switchError) {
-    // This error code indicates that the chain has not been added to MetaMask.
-    if (switchError.code === 4902) {
-      try {
-        await window.ethereum.request({
-          method: "wallet_addEthereumChain",
-          params: [
-            {
-              chainId: "0x66eeb",
-              chainName: "ArbRinkeby",
-              rpcUrls: ["https://rinkeby.arbitrum.io/rpc"],
-              blockExplorerUrls: ["https://rinkeby-explorer.arbitrum.io'"],
-            },
-          ],
-        });
-      } catch (addError) {
-        // handle "add" error
-      }
-    }
-    // handle other "switch" errors
   }
 }

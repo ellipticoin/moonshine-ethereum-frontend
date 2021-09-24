@@ -1,47 +1,45 @@
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef } from "react";
 import { ethers } from "ethers";
-import { useQueryEth } from "./ethereum.js";
-import { ERC20 } from "./contracts";
+import { useQueryEth } from "../ethereum.js";
+import { ERC20 } from "../contracts";
+import { MATIC, TOKENS } from "../constants";
 import Cleave from "cleave.js/react";
-import TokenAmount from "./TokenAmount";
+import TokenAmount from "../TokenAmount";
 const {
   utils: { parseUnits },
   constants: { AddressZero },
 } = ethers;
 
 export default forwardRef((props, ref) => {
-  const { onChange, address, tokenAddress, options, label } = props;
-  const [displayedInputBalance, setDisplayedInputBalance] = useState();
-  const decimals = useQueryEth(
-    ERC20.attach(tokenAddress),
-    async (contract) => contract.decimals(),
-    [tokenAddress]
+  const { onChange, address, token, options, label } = props;
+  const balance = useQueryEth(
+    ERC20.attach(token || AddressZero),
+    async (contract) =>
+      token === MATIC.address
+        ? contract.provider.getBalance(address)
+        : contract.balanceOf(address),
+    [token, address]
   );
-  const inputBalance = useQueryEth(
-    ERC20.attach(tokenAddress),
-    async (contract) => contract.balanceOf(address),
-    [tokenAddress, address]
-  );
-
-  useEffect(() => {
-    setDisplayedInputBalance(inputBalance);
-  }, [inputBalance]);
 
   return (
     <div className="form-floating mb-3">
-      {inputBalance && (
+      {balance && (
         <small
           style={{ right: "10px", top: "7px", position: "absolute" }}
           className="balance"
         >
-          {tokenAddress === AddressZero ? null : (
+          {token ? (
             <strong>
               Balance:{" "}
-              <TokenAmount decimals={decimals}>
-                {displayedInputBalance}
+              <TokenAmount
+                decimals={
+                  TOKENS.find(({ address }) => address === token).decimals
+                }
+              >
+                {balance}
               </TokenAmount>
             </strong>
-          )}
+          ) : null}
         </small>
       )}
       <Cleave
@@ -51,11 +49,12 @@ export default forwardRef((props, ref) => {
         options={{
           ...options,
           numeral: true,
-          numeralDecimalScale: 18,
+          numeralDecimalScale: 6,
           numeralThousandsGroupStyle: "thousand",
         }}
         onChange={(event) => {
           event.stopPropagation();
+
           onChange(
             event.target.rawValue === ""
               ? null

@@ -1,4 +1,5 @@
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { BASE_FACTOR, TOKEN_METADATA, USD } from "./constants";
 export function usePrevious(value) {
   const ref = useRef();
   useEffect(() => {
@@ -21,6 +22,24 @@ export function useInterval(callback, delay) {
     }, delay);
     return () => clearInterval(id);
   }, [delay]);
+}
+
+export function scaleUpTokenAmount(token, amount) {
+  console.log(token);
+  if (token.decimals > 6) {
+    return BigInt(Number(amount) * 10 ** (Number(token.decimals) - 6));
+  } else if (token.decimals < 6n) {
+    return BigInt(Number(amount) / 10 ** (6 - Number(token.decimals)));
+  } else {
+    return BigInt(amount);
+  }
+}
+
+export function scaleDownTokenAmount(token, amount) {
+  console.log(token);
+  if (token.decimals > 6) {
+    return (Number(token.decimals) - 6) / BigInt(Number(amount) * 10);
+  }
 }
 
 export function useLocalStorage(key, initialValue) {
@@ -48,4 +67,34 @@ export function useLocalStorage(key, initialValue) {
 
 export function proportionOf(value, numerator, denominator) {
   return (value * numerator) / denominator;
+}
+
+export function value(value, tokenAddress, options = {}) {
+  const { decimals } = options;
+  const number = Number(value) / Number(BASE_FACTOR);
+  if (number === 0 && options.zeroString) return options.zeroString;
+  if (options.showCurrency) {
+    if (tokenAddress === USD.address) {
+      return `$ ${formatNumber(number, { decimals })} USD`;
+    } else {
+      return `${formatNumber(number, { decimals })} ${
+        TOKEN_METADATA[tokenAddress].ticker
+      }`;
+    }
+  } else {
+    return formatNumber(number, { decimals });
+  }
+}
+
+export function formatBigInt(n, options = {}) {
+  return formatNumber(Number(n) / Number(BASE_FACTOR), options);
+}
+export function formatNumber(n, options = {}) {
+  const decimals = n < 1 ? 6 : options.decimals || 6;
+
+  const [number, decimal] = n.toFixed(decimals).toString().split(".");
+  return `${numberWithCommas(number)}.${decimal}`;
+}
+export function numberWithCommas(n) {
+  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }

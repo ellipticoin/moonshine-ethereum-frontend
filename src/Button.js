@@ -5,6 +5,7 @@ export default function Button(props) {
         type="button"
         disabled={props.disabled || props.loading}
         onClick={props.onClick}
+        style={props.style}
         className={props.className || "btn btn-primary"}
       >
         {props.loading ? (

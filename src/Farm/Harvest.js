@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import TokenAmount from "../TokenAmount";
 import { proportionOf } from "../helpers";
 import chaChing from "./chaching.wav";
@@ -6,7 +6,7 @@ import { AMM } from "../contracts.js";
 import { getGasPrice } from "../polygon.js";
 import Button from "../Button";
 import { ethers } from "ethers";
-import { useQueryEth, useTimestamp, useBlockNumber } from "../ethereum.js";
+import { useBlockNumber, useQueryEth, useTimestamp } from "../ethereum.js";
 
 const {
   utils: { id },
@@ -137,6 +137,7 @@ export function usePendingYield(pool, poolId, poolBalance, address, chainId) {
     PRECISION &&
     yieldPerSecond !== undefined &&
     yieldDebtByOwner !== undefined &&
+    yieldDebtByOwner !== null &&
     secondsSinceLastCheckpoint !== undefined &&
     totalSupply
   ) {

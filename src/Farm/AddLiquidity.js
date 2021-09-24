@@ -1,5 +1,5 @@
-import { useState, useRef, useMemo } from "react";
-import TokenAmountInput from "../TokenAmountInput";
+import { useMemo, useRef, useState } from "react";
+import TokenAmountInput from "../ETHInputs/TokenAmountInput";
 import { ethers } from "ethers";
 import { getGasPrice } from "../polygon.js";
 import { AMM, ERC20, USDC } from "../contracts.js";

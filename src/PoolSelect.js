@@ -1,10 +1,10 @@
 import { components as reactSelectComponents } from "react-select";
 import Select from "react-select";
-import { TOKENS } from "./constants";
+import { FARMABLE_TOKENS } from "./constants";
 
-const OPTIONS = TOKENS.map((token, index) => ({
+const OPTIONS = FARMABLE_TOKENS.map((token, index) => ({
   name: token.name,
-  label: token.symbol,
+  label: token.ticker,
   icon: token.logoURI,
   value: index,
 }));

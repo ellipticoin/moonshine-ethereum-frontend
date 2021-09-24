@@ -1,8 +1,5 @@
 import { useState } from "react";
 import Select from "react-select";
-import { PROD } from "./constants";
-import rinkarbyTokenList from "./rinkarbyTokenList.json";
-import rinkebyTokenList from "./rinkebyTokenList.json";
 
 const styles = {
   control: (provided) => ({

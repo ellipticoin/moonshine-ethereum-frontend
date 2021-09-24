@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@apollo/client": "^3.4.13",
     "@openzeppelin/contracts": "^4.1.0",
     "@popperjs/core": "^2.9.3",
     "@testing-library/jest-dom": "^5.11.4",
@@ -10,10 +11,13 @@
     "@testing-library/user-event": "^12.1.10",
     "@uniswap/v2-periphery": "^1.1.0-beta.0",
     "bootstrap": "^5.0.1",
+    "cbor": "^8.0.0",
     "classnames": "^2.3.1",
     "cleave.js": "1.5.10",
+    "eslint-plugin-unused-imports": "^1.1.5",
     "ethers": "^5.4.6",
-    "quickswap-sdk": "file:./dist/QuickSwap-sdk",
+    "graphql": "^15.6.0",
+    "postcss-custom-properties": "^10.0.0",
     "react": "^17.0.2",
     "react-async": "^10.0.1",
     "react-bootstrap-v5": "^1.4.0",
@@ -24,6 +28,7 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.3",
     "react-select": "^4.3.1",
+    "react-spring": "^9.2.4",
     "sass": "^1.34.1",
     "use-http": "^1.0.20",
     "web-vitals": "^1.0.1"
@@ -58,5 +63,8 @@
   },
   "devDependencies": {
     "prettier": "^2.3.0"
+  },
+  "resolutions": {
+    "react-scripts/postcss-preset-env/postcss-custom-properties": "^10.0.0"
   }
 }

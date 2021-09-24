@@ -1,30 +1,44 @@
 import "./App.css";
 import { useRef } from "react";
 import TokenSelect from "./TokenSelect";
-import TokenAmountInput from "./TokenAmountInput";
+import TokenAmountInput from "./ETHInputs/TokenAmountInput";
 import { useState } from "react";
-import { TOKENS } from "./constants";
-import { POLYGON_BRIDGE, ETH } from "./contracts";
-import { scaleUpTokenAmount } from "./quickswap";
+import {
+  BRIDGE_ADDRESS,
+  MATIC,
+  SAFE_ADDRESS,
+  SIGNER,
+  TOKEN_METADATA,
+} from "./constants";
+import { ERC20 } from "./contracts";
+import { scaleUpTokenAmount } from "./helpers";
 
 export default function Deposit(props) {
   const { address } = props;
-  const [token, setToken] = useState({ address: TOKENS[0].address });
+  const [token, setToken] = useState();
   const [value, setValue] = useState(0n);
   const [loading, setLoading] = useState(false);
+  const [depositToSafe, setDepositToSafe] = useState(false);
+  const to = depositToSafe ? SAFE_ADDRESS : BRIDGE_ADDRESS;
   const inputAmountRef = useRef(null);
   const deposit = async () => {
     setLoading(true);
     try {
-      console.log(scaleUpTokenAmount(ETH, value));
-
-      const tx = await POLYGON_BRIDGE.depositEtherFor(address, {
-        value: scaleUpTokenAmount(ETH, value),
-      });
+      const tx = await (token === MATIC.address
+        ? SIGNER.sendTransaction({
+            to,
+            value: scaleUpTokenAmount(TOKEN_METADATA[token], value),
+          })
+        : ERC20.attach(token)
+            .connect(SIGNER)
+            .transfer(to, scaleUpTokenAmount(TOKEN_METADATA[token], value)));
       await tx.wait();
     } catch (err) {
-      if (err.data && err.data.message) alert(err.data.message);
-      if (err) alert(err);
+      err.message ? alert(err.message) : alert(JSON.stringify(err));
+      setValue(0n);
+
+      if (inputAmountRef.current) inputAmountRef.current.setRawValue("");
+      setLoading(false);
     }
     setValue(0n);
     inputAmountRef.current.setRawValue("");
@@ -36,18 +50,8 @@ export default function Deposit(props) {
       <div className="row">
         <div className="col-sm-12 col-lg-6">
           <TokenSelect
-            tokens={[
-              {
-                id: 0,
-                name: TOKENS[0].name,
-                icon: TOKENS[0].logoURI,
-                label: TOKENS[0].symbol,
-                value: TOKENS[0].address,
-                address: TOKENS[0].address,
-              },
-            ]}
-            value={token.address}
-            onChange={(token) => setToken(token)}
+            value={token}
+            onChange={({ address }) => setToken(address)}
             placeholder="Token To Deposit"
           />
         </div>
@@ -56,11 +60,22 @@ export default function Deposit(props) {
             label="Amount To Deposit"
             ref={inputAmountRef}
             address={address}
-            tokenAddress={token.address}
+            token={token}
             onChange={(value) => setValue(value)}
             value={value}
           />
         </div>
+      </div>
+      <div className="form-check">
+        <input
+          type="checkbox"
+          onChange={() => setDepositToSafe(!depositToSafe)}
+          checked={depositToSafe}
+          className="form-check-input"
+        />
+        <label title="" className="form-check-label">
+          Deposit Directly To Safe
+        </label>
       </div>
       <div className="d-grid gap-2 mt-2">
         <button
@@ -76,6 +91,9 @@ export default function Deposit(props) {
             "Deposit"
           )}
         </button>
+      </div>
+      <div className="text-muted text-center">
+        Note: Switch to Moonshine Chain To Withdraw Tokens
       </div>
     </form>
   );

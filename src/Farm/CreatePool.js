@@ -1,7 +1,7 @@
 import TokenAmountInput from "../TokenAmountInput";
 import TokenAmount from "../TokenAmount";
 import { getContractAddress } from "../contracts";
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { BASE_TOKEN_DECIMALS } from "../constants";
 import { ERC20 } from "../contracts";
 import ERC20JSON from "@openzeppelin/contracts/build/contracts/ERC20";
