@@ -87,7 +87,7 @@ function App(props) {
                       <Bridge address={address} chainId={chainId} />
                     </Route>
                     <Route path="/farm">
-                      <Farm {...props} />
+                      <Farm address={address} chainId={chainId} />
                     </Route>
                     <Route path="/">
                       <Portfolio address={address} chainId={chainId} />

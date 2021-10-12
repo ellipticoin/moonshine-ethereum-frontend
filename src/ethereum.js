@@ -48,7 +48,6 @@ export function useBlockNumber() {
         subscriptionId = newSubscriptionId;
       });
     window.ethereum.on("message", ({ data }) => {
-      console.log(data.result);
       setBlockNumber(convertToNative(BigNumber.from(data.result.number)));
     });
     return () => {

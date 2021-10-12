@@ -5,6 +5,7 @@ import chaChing from "./chaching.wav";
 import { AMM } from "../contracts.js";
 import { getGasPrice } from "../polygon.js";
 import Button from "../Button";
+import { SIGNER, POLYGON_CHAIN_ID } from "../constants.js";
 import { ethers } from "ethers";
 import { useBlockNumber, useQueryEth, useTimestamp } from "../ethereum.js";
 
@@ -12,7 +13,7 @@ const {
   utils: { id },
 } = ethers;
 
-export default function PendingYield(props) {
+export default function Harvest(props) {
   const { address, pool, poolId, poolBalance, chainId } = props;
 
   const [lastHarvestedBlockNumber, setLastHarvestedBlockNumber] = useState();
@@ -48,7 +49,7 @@ export default function PendingYield(props) {
     chaChingRef.current.currentTime = 0;
     await chaChingRef.current.play();
     try {
-      const tx = await AMM.harvest(poolId, {
+      const tx = await AMM.connect(SIGNER).harvest(poolId, {
         gasPrice: await getGasPrice("fastest"),
       });
       setLastHarvestedBlockNumber(BigInt((await tx.wait()).blockNumber));
@@ -90,7 +91,7 @@ export default function PendingYield(props) {
       </div>
       <div className="d-grid gap-2 mt-2">
         <Button
-          disabled={lastHarvestedBlockNumber === blockNumber}
+          disabled={lastHarvestedBlockNumber === blockNumber || chainId !== POLYGON_CHAIN_ID}
           onClick={(e) => {
             e.preventDefault();
             harvest();
