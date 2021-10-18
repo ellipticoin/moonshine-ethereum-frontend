@@ -91,7 +91,10 @@ export default function Harvest(props) {
       </div>
       <div className="d-grid gap-2 mt-2">
         <Button
-          disabled={lastHarvestedBlockNumber === blockNumber || chainId !== POLYGON_CHAIN_ID}
+          disabled={
+            lastHarvestedBlockNumber === blockNumber ||
+            chainId !== POLYGON_CHAIN_ID
+          }
           onClick={(e) => {
             e.preventDefault();
             harvest();

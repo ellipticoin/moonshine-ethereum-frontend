@@ -27,7 +27,7 @@ export default function MoonshineBalances(props) {
   const [showManageLiquidityModal, setShowManageLiquidityModal] =
     useState(false);
   const { data: { tokens } = { tokens: TOKENS } } = useGetTokens(address);
-  const totalBalance = tokens.reduce((sum, token) => {
+  const tokenBalance = tokens.reduce((sum, token) => {
     const price = token.address === USD.address ? BASE_FACTOR : token.price;
     let total = (token.balance * price) / BASE_FACTOR;
     return sum + total;
@@ -45,6 +45,9 @@ export default function MoonshineBalances(props) {
     },
     0n
   );
+
+  const portfolioBalance = tokenBalance + totalLiquidityBalance;
+
   return (
     <>
       <div className="d-flex flex-column">
@@ -52,7 +55,7 @@ export default function MoonshineBalances(props) {
           <h1>Your Portfolio</h1>
           <h1>
             Net Worth:{" "}
-            {value(totalBalance, USD.address, { showCurrency: true })}
+            {value(portfolioBalance, USD.address, { showCurrency: true })}
           </h1>
         </header>
         <h2>Tokens</h2>
@@ -141,7 +144,7 @@ export default function MoonshineBalances(props) {
         </div>
         <strong className="align-self-end" style={{ marginRight: 10 }}>
           Total Token Balances:{" "}
-          {value(totalBalance, USD.address, { showCurrency: true })}
+          {value(tokenBalance, USD.address, { showCurrency: true })}
         </strong>
         <h2>Your Liquidity</h2>
         <div className="table-wrapper">

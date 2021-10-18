@@ -9,7 +9,9 @@ export const MOONSHINE_CHAIN_ID = hexlify(
 );
 export const BRIDGE_ADDRESS = process.env.REACT_APP_BRIDGE_ADDRESS;
 export const SAFE_ADDRESS = process.env.REACT_APP_SAFE_ADDRESS;
-export const BOOTNODES = PROD ? ["mainnet.moonshine.exchange"] : ["localhost:80"];
+export const BOOTNODES = PROD
+  ? ["mainnet.moonshine.exchange"]
+  : ["localhost:80"];
 export const BASE_TOKEN_DECIMALS = 6;
 export const DECIMALS = 6;
 export const MAX_SLIPPAGE = 1000n;

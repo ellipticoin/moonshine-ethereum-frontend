@@ -75,7 +75,10 @@ export function value(value, tokenAddress, options = {}) {
   if (number === 0 && options.zeroString) return options.zeroString;
   if (options.showCurrency) {
     if (tokenAddress === USD.address) {
-      return `$ ${formatNumber(number, { decimals })} USD`;
+      console.log(formatNumber(0, { decimals: 2 }));
+      // console.log(number)
+      // console.log(`$ ${formatNumber(number, { decimals: 2 })} USD`)
+      return `$ ${formatNumber(number, { decimals: 2 })} USD`;
     } else {
       return `${formatNumber(number, { decimals })} ${
         TOKEN_METADATA[tokenAddress].ticker
@@ -90,7 +93,7 @@ export function formatBigInt(n, options = {}) {
   return formatNumber(Number(n) / Number(BASE_FACTOR), options);
 }
 export function formatNumber(n, options = {}) {
-  const decimals = n < 1 ? 6 : options.decimals || 6;
+  const decimals = n < 1 ? 2 : options.decimals || 6;
 
   const [number, decimal] = n.toFixed(decimals).toString().split(".");
   return `${numberWithCommas(number)}.${decimal}`;

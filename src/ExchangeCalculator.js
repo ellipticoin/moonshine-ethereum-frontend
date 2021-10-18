@@ -28,11 +28,11 @@ export default class ExchangeCalculator {
       underlyingInputAmount,
       inputTokenAddress
     );
-    console.log(inputAmount)
+    console.log(inputAmount);
     const usdAmount = this.sell(inputAmount, inputTokenAddress);
-    console.log(usdAmount)
+    console.log(usdAmount);
     const underlyingOutputAmount = this.buy(usdAmount, outputTokenAddress);
-    console.log(underlyingOutputAmount)
+    console.log(underlyingOutputAmount);
     return this.amountToUnderlying(underlyingOutputAmount, outputTokenAddress);
   }
 
