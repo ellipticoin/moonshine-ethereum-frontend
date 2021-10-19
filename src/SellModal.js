@@ -6,7 +6,8 @@ import React, {
   useState,
 } from "react";
 import ExchangeCalculator from "./ExchangeCalculator";
-import { BASE_FACTOR, MAX_SLIPPAGE, TOKEN_METADATA, USD } from "./constants";
+import { BASE_FACTOR, MAX_SLIPPAGE, TOKENS } from "./constants";
+import { tokenMetadata } from "./helpers";
 import { MOONSHINE_AMM } from "./contracts";
 import AppContext from "./AppContext";
 import TokenAmountInput from "./ETHInputs/TokenAmountInput";
@@ -24,7 +25,7 @@ export default function SellModal(props) {
     let exchangeRateCalculator = new ExchangeCalculator({
       liquidityTokens,
       usdExchangeRate,
-      usdAddress: USD.address,
+      usdAddress: TOKENS["CUSDC"].address,
     });
     if (!inputAmount || inputAmount === 0n) return;
 
@@ -33,7 +34,11 @@ export default function SellModal(props) {
   const outputAmount = useMemo(() => {
     if (!exchangeRateCalculator) return;
     return (
-      (exchangeRateCalculator.getOutputAmount(inputAmount, token, USD.address) *
+      (exchangeRateCalculator.getOutputAmount(
+        inputAmount,
+        token,
+        TOKENS["CUSDC"].address
+      ) *
         (BASE_FACTOR - MAX_SLIPPAGE)) /
       BASE_FACTOR
     );
@@ -62,7 +67,7 @@ export default function SellModal(props) {
   return token ? (
     <Modal show={show} setShow={setShow}>
       <div className="modal-header">
-        <h5 className="modal-title">Sell {TOKEN_METADATA[token].name}</h5>
+        <h5 className="modal-title">Sell {tokenMetadata(token, "name")}</h5>
         <button
           type="button"
           aria-label="Close"
@@ -83,11 +88,14 @@ export default function SellModal(props) {
               <div className="col-sm-6">
                 {show ? (
                   <TokenAmountInput
-                    label={`Amount to Sell In ${TOKEN_METADATA[token].ticker}`}
+                    label={`Amount to Sell In ${tokenMetadata(
+                      token,
+                      "symbol"
+                    )}`}
                     ref={inputAmountRef}
                     address={address}
                     onChange={(inputAmount) => setInputAmount(inputAmount)}
-                    tokenAddress={USD.address}
+                    tokenAddress={TOKENS["CUSDC"].address}
                     value={inputAmount}
                   />
                 ) : null}

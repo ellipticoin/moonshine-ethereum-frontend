@@ -6,7 +6,7 @@ import React, {
   useState,
 } from "react";
 import ExchangeCalculator from "./ExchangeCalculator";
-import { BASE_FACTOR, MAX_SLIPPAGE, USD } from "./constants";
+import { BASE_FACTOR, MAX_SLIPPAGE, TOKENS } from "./constants";
 import { MOONSHINE_AMM } from "./contracts";
 import AppContext from "./AppContext";
 import TokenAmountInput from "./ETHInputs/TokenAmountInput";
@@ -24,7 +24,7 @@ export default function BuyModal(props) {
     let exchangeRateCalculator = new ExchangeCalculator({
       liquidityTokens,
       usdExchangeRate,
-      usdAddress: USD.address,
+      usdAddress: TOKENS["CUSDC"].address,
     });
     if (!inputAmount || inputAmount === 0n) return;
 
@@ -34,7 +34,11 @@ export default function BuyModal(props) {
     if (!token) return;
     if (!exchangeRateCalculator) return;
     return (
-      (exchangeRateCalculator.getOutputAmount(inputAmount, USD.address, token) *
+      (exchangeRateCalculator.getOutputAmount(
+        inputAmount,
+        TOKENS["CUSDC"].address,
+        token
+      ) *
         (BASE_FACTOR - MAX_SLIPPAGE)) /
       BASE_FACTOR
     );
@@ -90,7 +94,7 @@ export default function BuyModal(props) {
                     ref={inputAmountRef}
                     address={address}
                     onChange={(inputAmount) => setInputAmount(inputAmount)}
-                    tokenAddress={USD.address}
+                    tokenAddress={TOKENS["CUSDC"].address}
                     value={inputAmount}
                   />
                 ) : null}

@@ -1,4 +1,4 @@
-import { BASE_FACTOR, LIQUIDITY_TOKENS, TOKENS } from "./constants.js";
+import { BASE_FACTOR, TOKENS } from "./constants.js";
 import { ethers } from "ethers";
 import { gql, useQuery } from "@apollo/client";
 import cbor from "cbor";
@@ -117,12 +117,12 @@ export function useGetBlockchainState(apolloClient) {
 
 export function useGetTokens(address) {
   let {
-    data: { tokens } = { tokens: TOKENS },
+    data: { tokens } = { tokens: Object.values(TOKENS) },
     error,
     loading,
   } = useQuery(GET_TOKENS, {
     variables: {
-      tokens: TOKENS.map(({ address }) => address),
+      tokens: Object.keys(TOKENS).map((symbol) => TOKENS[symbol].address),
       address,
     },
   });
@@ -141,7 +141,9 @@ export function useGetLiquidityTokens(address) {
     GET_LIQUIDITY_TOKENS,
     {
       variables: {
-        tokens: LIQUIDITY_TOKENS.map(({ address }) => address),
+        tokens: Object.keys(TOKENS)
+          .filter((symbol) => symbol !== "CUSDC")
+          .map((symbol) => TOKENS[symbol].address),
         address,
       },
     }

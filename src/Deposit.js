@@ -3,13 +3,7 @@ import { useRef } from "react";
 import TokenSelect from "./TokenSelect";
 import TokenAmountInput from "./ETHInputs/TokenAmountInput";
 import { useState } from "react";
-import {
-  BRIDGE_ADDRESS,
-  MATIC,
-  SAFE_ADDRESS,
-  SIGNER,
-  TOKEN_METADATA,
-} from "./constants";
+import { BRIDGE_ADDRESS, TOKENS, SAFE_ADDRESS, SIGNER } from "./constants";
 import { ERC20 } from "./contracts";
 import { scaleUpTokenAmount } from "./helpers";
 
@@ -24,14 +18,14 @@ export default function Deposit(props) {
   const deposit = async () => {
     setLoading(true);
     try {
-      const tx = await (token === MATIC.address
+      const tx = await (token === TOKENS["MATIC"].address
         ? SIGNER.sendTransaction({
             to,
-            value: scaleUpTokenAmount(TOKEN_METADATA[token], value),
+            value: scaleUpTokenAmount(token, value),
           })
         : ERC20.attach(token)
             .connect(SIGNER)
-            .transfer(to, scaleUpTokenAmount(TOKEN_METADATA[token], value)));
+            .transfer(to, scaleUpTokenAmount(token, value)));
       await tx.wait();
     } catch (err) {
       err.message ? alert(err.message) : alert(JSON.stringify(err));

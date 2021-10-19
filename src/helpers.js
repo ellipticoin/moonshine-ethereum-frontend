@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BASE_FACTOR, TOKEN_METADATA, USD } from "./constants";
+import { BASE_FACTOR, TOKENS } from "./constants";
 export function usePrevious(value) {
   const ref = useRef();
   useEffect(() => {
@@ -25,7 +25,6 @@ export function useInterval(callback, delay) {
 }
 
 export function scaleUpTokenAmount(token, amount) {
-  console.log(token);
   if (token.decimals > 6) {
     return BigInt(Number(amount) * 10 ** (Number(token.decimals) - 6));
   } else if (token.decimals < 6n) {
@@ -36,7 +35,6 @@ export function scaleUpTokenAmount(token, amount) {
 }
 
 export function scaleDownTokenAmount(token, amount) {
-  console.log(token);
   if (token.decimals > 6) {
     return (Number(token.decimals) - 6) / BigInt(Number(amount) * 10);
   }
@@ -48,7 +46,6 @@ export function useLocalStorage(key, initialValue) {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.log(error);
       return initialValue;
     }
   });
@@ -69,20 +66,30 @@ export function proportionOf(value, numerator, denominator) {
   return (value * numerator) / denominator;
 }
 
-export function value(value, tokenAddress, options = {}) {
+export function tokenMetadata(address, key) {
+  if (key === "symbol") {
+    return Object.keys(TOKENS).find(
+      (symbol) => TOKENS[symbol].address.toLowerCase() === address.toLowerCase()
+    );
+  } else {
+    return TOKENS[
+      Object.keys(TOKENS).find(
+        (symbol) =>
+          TOKENS[symbol].address.toLowerCase() === address.toLowerCase()
+      )
+    ][key];
+  }
+}
+
+export function value(value, symbol, options = {}) {
   const { decimals } = options;
   const number = Number(value) / Number(BASE_FACTOR);
   if (number === 0 && options.zeroString) return options.zeroString;
   if (options.showCurrency) {
-    if (tokenAddress === USD.address) {
-      console.log(formatNumber(0, { decimals: 2 }));
-      // console.log(number)
-      // console.log(`$ ${formatNumber(number, { decimals: 2 })} USD`)
-      return `$ ${formatNumber(number, { decimals: 2 })} USD`;
+    if (symbol === "CUSDC") {
+      return `$ ${formatNumber(number, { decimals: 2 })}`;
     } else {
-      return `${formatNumber(number, { decimals })} ${
-        TOKEN_METADATA[tokenAddress].ticker
-      }`;
+      return `${formatNumber(number, { decimals })} ${symbol}`;
     }
   } else {
     return formatNumber(number, { decimals });

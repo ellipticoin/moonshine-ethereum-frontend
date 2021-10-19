@@ -2,7 +2,7 @@ import NumberFormat from "react-number-format";
 import React, { useCallback, useContext, useRef, useState } from "react";
 import { value } from "./helpers";
 import { proportionOf } from "./helpers";
-import { BASE_TOKEN_DECIMALS, USD } from "./constants";
+import { BASE_TOKEN_DECIMALS, TOKENS } from "./constants";
 import { MOONSHINE_AMM } from "./contracts";
 import AppContext from "./AppContext";
 import { ChevronRight } from "react-feather";
@@ -161,7 +161,7 @@ export default function ManageLiquidityModal(props) {
                             liquidityToken.balance) /
                             liquidityToken.totalSupply
                         : 0n,
-                      USD.address,
+                      TOKENS["CUSDC"].address,
                       { showCurrency: true }
                     )}
                 </div>
@@ -191,7 +191,7 @@ export default function ManageLiquidityModal(props) {
                         onChangeRef.current = false;
                       }
                     }}
-                    tokenAddress={USD.address}
+                    tokenAddress={TOKENS["CUSDC"].address}
                     value={tokenAmount}
                   />
                   <TokenAmountInput
@@ -215,7 +215,7 @@ export default function ManageLiquidityModal(props) {
                         onChangeRef.current = false;
                       }
                     }}
-                    tokenAddress={USD.address}
+                    tokenAddress={TOKENS["CUSDC"].address}
                     value={baseTokenAmount}
                   />
                 </div>
@@ -253,7 +253,7 @@ export default function ManageLiquidityModal(props) {
                 ref={tokenAmountRef}
                 address={address}
                 onChange={(newTokenAmount) => setTokenAmount(newTokenAmount)}
-                tokenAddress={USD.address}
+                tokenAddress={TOKENS["CUSDC"].address}
                 value={tokenAmount}
               />
               <TokenAmountInput
@@ -263,7 +263,7 @@ export default function ManageLiquidityModal(props) {
                 onChange={(newInitialPrice) => {
                   setInitialPrice(newInitialPrice);
                 }}
-                tokenAddress={USD.address}
+                tokenAddress={TOKENS["CUSDC"].address}
                 value={baseTokenAmount}
               />
             </div>

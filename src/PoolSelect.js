@@ -1,11 +1,11 @@
 import { components as reactSelectComponents } from "react-select";
 import Select from "react-select";
-import { FARMABLE_TOKENS } from "./constants";
+import { FARMABLE_TOKENS, TOKENS } from "./constants";
 
-const OPTIONS = FARMABLE_TOKENS.map((token, index) => ({
-  name: token.name,
-  label: token.ticker,
-  icon: token.logoURI,
+const OPTIONS = FARMABLE_TOKENS.map((symbol, index) => ({
+  name: TOKENS[symbol].name,
+  label: TOKENS[symbol].ticker,
+  icon: TOKENS[symbol].logoURI,
   value: index,
 }));
 const styles = {

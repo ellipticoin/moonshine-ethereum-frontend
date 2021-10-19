@@ -3,11 +3,11 @@ import Select from "react-select";
 import { TOKENS } from "./constants";
 import React from "react";
 
-const OPTIONS = TOKENS.map((token, index) => ({
-  name: token.name,
-  label: token.ticker,
-  icon: token.logoURI,
-  value: token.address,
+const OPTIONS = Object.keys(TOKENS).map((symbol) => ({
+  name: TOKENS[symbol].name,
+  label: symbol,
+  icon: TOKENS[symbol].logoURI,
+  value: TOKENS[symbol].address,
 }));
 
 const styles = {

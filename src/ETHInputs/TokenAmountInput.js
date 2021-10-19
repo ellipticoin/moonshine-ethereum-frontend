@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import { ethers } from "ethers";
 import { useQueryEth } from "../ethereum.js";
 import { ERC20 } from "../contracts";
-import { MATIC, TOKENS } from "../constants";
+import { TOKENS } from "../constants";
 import Cleave from "cleave.js/react";
 import TokenAmount from "../TokenAmount";
 const {
@@ -15,7 +15,7 @@ export default forwardRef((props, ref) => {
   const balance = useQueryEth(
     ERC20.attach(token || AddressZero),
     async (contract) =>
-      token === MATIC.address
+      token === TOKENS["MATIC"].address
         ? contract.provider.getBalance(address)
         : contract.balanceOf(address),
     [token, address]
