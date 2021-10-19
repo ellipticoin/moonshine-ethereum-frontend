@@ -5,7 +5,7 @@ import { getGasPrice } from "../polygon.js";
 import { AMM, ERC20, USDC } from "../contracts.js";
 import { proportionOf } from "../helpers";
 import { useQueryEth } from "../ethereum.js";
-import { BASE_TOKEN_DECIMALS } from "../constants";
+import { BASE_TOKEN_DECIMALS, SIGNER } from "../constants";
 import DepositButton from "./DepositButton";
 const {
   constants: { MaxUint256 },
@@ -39,7 +39,7 @@ export default function AddLiquidity(props) {
 
   const addLiquidity = async () => {
     setLoading(true);
-    const tx = await AMM.addLiquidity(poolId, tokenToAdd, depositToSafe, {
+    const tx = await AMM.connect(SIGNER).addLiquidity(poolId, tokenToAdd, depositToSafe, {
       gasPrice: await getGasPrice("fastest"),
     });
     try {
