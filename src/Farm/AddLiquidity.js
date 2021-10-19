@@ -54,7 +54,7 @@ export default function AddLiquidity(props) {
   };
   const approveBaseToken = async () => {
     setLoading(true);
-    const tx = await USDC.approve(AMM.address, MaxUint256, {
+    const tx = await USDC.connect(SIGNER).approve(AMM.address, MaxUint256, {
       gasPrice: await getGasPrice("fastest"),
     });
     try {
@@ -70,7 +70,7 @@ export default function AddLiquidity(props) {
   const approveToken = async () => {
     setLoading(true);
     const tokenContract = ERC20.attach(pool.token);
-    const tx = await tokenContract.approve(AMM.address, MaxUint256, {
+    const tx = await tokenContract.connect(SIGNER).approve(AMM.address, MaxUint256, {
       gasPrice: await getGasPrice("fastest"),
     });
     try {
