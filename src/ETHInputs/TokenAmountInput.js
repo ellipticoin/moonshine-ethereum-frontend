@@ -33,7 +33,7 @@ export default forwardRef((props, ref) => {
               Balance:{" "}
               <TokenAmount
                 decimals={
-                  TOKENS.find(({ address }) => address === token).decimals
+                  Object.values(TOKENS).find(({address}) => address === token).decimals
                 }
               >
                 {balance}
