@@ -4,7 +4,7 @@ import { FARMABLE_TOKENS, TOKENS } from "./constants";
 
 const OPTIONS = FARMABLE_TOKENS.map((symbol, index) => ({
   name: TOKENS[symbol].name,
-  label: TOKENS[symbol].ticker,
+  label: symbol,
   icon: TOKENS[symbol].logoURI,
   value: index,
 }));
