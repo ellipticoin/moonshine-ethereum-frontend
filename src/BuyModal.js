@@ -48,8 +48,6 @@ export default function BuyModal(props) {
       e.preventDefault();
       setLoading(true);
       try {
-        console.log(inputAmount);
-        console.log(outputAmount);
         const tx = await MOONSHINE_AMM.buy(inputAmount, token, outputAmount);
         await tx.wait();
         setInputAmount(null);

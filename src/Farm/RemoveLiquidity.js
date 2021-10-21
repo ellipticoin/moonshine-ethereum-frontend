@@ -3,6 +3,7 @@ import { AMM } from "../contracts.js";
 import NumberFormat from "react-number-format";
 import { proportionOf } from "../helpers";
 import Button from "../Button";
+import { SIGNER } from "../constants";
 import { getGasPrice } from "../polygon.js";
 const Input = (props) => (
   <div className="form-floating">
@@ -22,7 +23,7 @@ export default function RemoveLiquidity(props) {
   const removeLiquidity = async () => {
     setLoading(true);
     try {
-      await AMM.removeLiquidity(
+      await AMM.connect(SIGNER).removeLiquidity(
         poolId,
         proportionOf(poolBalance, percentageToRemove, 1000000n),
         { gasPrice: await getGasPrice("fastest") }

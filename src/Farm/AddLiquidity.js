@@ -39,9 +39,14 @@ export default function AddLiquidity(props) {
 
   const addLiquidity = async () => {
     setLoading(true);
-    const tx = await AMM.connect(SIGNER).addLiquidity(poolId, tokenToAdd, depositToSafe, {
-      gasPrice: await getGasPrice("fastest"),
-    });
+    const tx = await AMM.connect(SIGNER).addLiquidity(
+      poolId,
+      tokenToAdd,
+      depositToSafe,
+      {
+        gasPrice: await getGasPrice("fastest"),
+      }
+    );
     try {
       await tx.wait();
     } catch (err) {
@@ -70,9 +75,11 @@ export default function AddLiquidity(props) {
   const approveToken = async () => {
     setLoading(true);
     const tokenContract = ERC20.attach(pool.token);
-    const tx = await tokenContract.connect(SIGNER).approve(AMM.address, MaxUint256, {
-      gasPrice: await getGasPrice("fastest"),
-    });
+    const tx = await tokenContract
+      .connect(SIGNER)
+      .approve(AMM.address, MaxUint256, {
+        gasPrice: await getGasPrice("fastest"),
+      });
     try {
       await tx.wait();
       setLoading(false);

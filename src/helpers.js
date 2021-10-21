@@ -25,18 +25,20 @@ export function useInterval(callback, delay) {
 }
 
 export function scaleUpTokenAmount(token, amount) {
-  if (token.decimals > 6) {
-    return BigInt(Number(amount) * 10 ** (Number(token.decimals) - 6));
-  } else if (token.decimals < 6n) {
-    return BigInt(Number(amount) / 10 ** (6 - Number(token.decimals)));
+  const decimals = tokenMetadata(token, "decimals");
+  if (decimals > 6) {
+    return BigInt(Number(amount) * 10 ** (Number(decimals) - 6));
+  } else if (decimals < 6) {
+    return BigInt(Number(amount) / 10 ** (6 - Number(decimals)));
   } else {
     return BigInt(amount);
   }
 }
 
 export function scaleDownTokenAmount(token, amount) {
-  if (token.decimals > 6) {
-    return (Number(token.decimals) - 6) / BigInt(Number(amount) * 10);
+  const decimals = tokenMetadata(token, "decimals");
+  if (decimals > 6) {
+    return (Number(decimals) - 6) / BigInt(Number(amount) * 10);
   }
 }
 
@@ -68,9 +70,7 @@ export function proportionOf(value, numerator, denominator) {
 
 export function tokenMetadata(address, key) {
   if (key === "symbol") {
-    return Object.keys(TOKENS).find(
-      (symbol) => TOKENS[symbol].address.toLowerCase() === address.toLowerCase()
-    );
+    return tokenSymbol(address);
   } else {
     return TOKENS[
       Object.keys(TOKENS).find(
@@ -81,28 +81,34 @@ export function tokenMetadata(address, key) {
   }
 }
 
-export function value(value, symbol, options = {}) {
+export function tokenSymbol(address) {
+  return Object.keys(TOKENS).find(
+    (symbol) => TOKENS[symbol].address.toLowerCase() === address.toLowerCase()
+  );
+}
+
+export function formatTokenAmount(value, address, options = {}) {
   const { decimals } = options;
-  const number = Number(value) / Number(BASE_FACTOR);
-  if (number === 0 && options.zeroString) return options.zeroString;
-  if (options.showCurrency) {
-    if (symbol === "CUSDC") {
-      return `$ ${formatNumber(number, { decimals: 2 })}`;
-    } else {
-      return `${formatNumber(number, { decimals })} ${symbol}`;
-    }
+  if (value === 0n) return "0";
+  if (options.showSymbol) {
+    const symbol = tokenSymbol(address);
+    return `${formatBigInt(value, { decimals })} ${symbol}`;
   } else {
-    return formatNumber(number, { decimals });
+    return formatBigInt(value, { decimals });
   }
+}
+
+export function formatUsdAmount(value, address, options = {}) {
+  return `$ ${formatBigInt(value, { decimals: 2 })}`;
 }
 
 export function formatBigInt(n, options = {}) {
   return formatNumber(Number(n) / Number(BASE_FACTOR), options);
 }
-export function formatNumber(n, options = {}) {
-  const decimals = n < 1 ? 2 : options.decimals || 6;
-
+export function formatNumber(n, options = { decimals: 6 }) {
+  const decimals = options.decimals || 6;
   const [number, decimal] = n.toFixed(decimals).toString().split(".");
+
   return `${numberWithCommas(number)}.${decimal}`;
 }
 export function numberWithCommas(n) {

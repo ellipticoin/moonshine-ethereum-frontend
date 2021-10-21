@@ -5,12 +5,12 @@ import {
   useGetTokens,
 } from "./queries";
 import { BASE_FACTOR, TOKENS } from "./constants";
-import { formatBigInt, value, tokenMetadata } from "./helpers";
+import { formatTokenAmount, formatUsdAmount, tokenMetadata } from "./helpers";
 import BuyModal from "./BuyModal";
 import SellModal from "./SellModal";
 import ManageLiquidityModal from "./ManageLiquidityModal";
 
-export default function MoonshineBalances(props) {
+export default function Portfolio(props) {
   const { address } = props;
   const { data: { liquidityTokens } = { liquidityTokens: TOKENS } } =
     useGetLiquidityTokens(address);
@@ -51,19 +51,14 @@ export default function MoonshineBalances(props) {
       <div className="d-flex flex-column">
         <header>
           <h1>Your Portfolio</h1>
-          <h1>
-            Net Worth:{" "}
-            {value(portfolioBalance, "CUSDC", {
-              showCurrency: true,
-            })}
-          </h1>
+          <h1>Net Worth: {formatUsdAmount(portfolioBalance)}</h1>
         </header>
         <h2 className="d-flex justify-content-between">
           Tokens
-          <div class="form-check mt-2">
+          <div className="form-check mt-2">
             <label
-              class="form-check-label"
-              for="hideZeroBalances"
+              className="form-check-label"
+              htmlFor="hideZeroBalances"
               style={{ fontSize: "12px", marginBottom: "0" }}
             >
               Hide Zero Balances
@@ -72,7 +67,7 @@ export default function MoonshineBalances(props) {
               type="checkbox"
               checked={hideZeroBalances}
               onChange={() => setHideZeroBalances(!hideZeroBalances)}
-              class="form-check-input"
+              className="form-check-input"
               id="hideZeroBalances"
             />
           </div>
@@ -115,13 +110,10 @@ export default function MoonshineBalances(props) {
                       />
                       {tokenMetadata(token.address, "name")}
                     </th>
-                    <td className="text-end">{formatBigInt(token.balance)}</td>
                     <td className="text-end">
-                      {value(token.price, "CUSDC", {
-                        showCurrency: true,
-                        decimals: 2,
-                      })}
+                      {formatTokenAmount(token.balance)}
                     </td>
+                    <td className="text-end">{formatUsdAmount(token.price)}</td>
                     {token.address === TOKENS["CUSDC"].address ? (
                       <td></td>
                     ) : (
@@ -151,10 +143,8 @@ export default function MoonshineBalances(props) {
                       </td>
                     )}
                     <td className="text-end">
-                      {value(
-                        (token.balance * token.price) / BASE_FACTOR,
-                        "CUSDC",
-                        { showCurrency: true }
+                      {formatUsdAmount(
+                        (token.balance * token.price) / BASE_FACTOR
                       )}
                     </td>
                   </tr>
@@ -164,14 +154,14 @@ export default function MoonshineBalances(props) {
         </div>
         <strong className="align-self-end" style={{ marginRight: 10 }}>
           Total Token Balances:{" "}
-          {value(tokenBalance, "CUSDC", { showCurrency: true })}
+          {formatTokenAmount(tokenBalance, "CUSDC", { showCurrency: true })}
         </strong>
         <h2 className="d-flex justify-content-between">
           Your Liquidity
-          <div class="form-check mt-2">
+          <div className="form-check mt-2">
             <label
-              class="form-check-label"
-              for="hideZeroLiquidityBalances"
+              className="form-check-label"
+              htmlFor="hideZeroLiquidityBalances"
               style={{ fontSize: "12px", marginBottom: "0" }}
             >
               Hide Zero Balances
@@ -182,7 +172,7 @@ export default function MoonshineBalances(props) {
               onChange={() =>
                 setHideZeroLiquidityBalances(!hideZeroLiquidityBalances)
               }
-              class="form-check-input"
+              className="form-check-input"
               id="hideZeroLiquidityBalances"
             />
           </div>
@@ -231,7 +221,7 @@ export default function MoonshineBalances(props) {
                     <td className="text-end">
                       <div>
                         {liquidityToken.balance &&
-                          value(
+                          formatTokenAmount(
                             liquidityToken.totalSupply
                               ? (liquidityToken.poolSupplyOfToken *
                                   liquidityToken.balance) /
@@ -246,7 +236,7 @@ export default function MoonshineBalances(props) {
                       </div>
                       <div>
                         {liquidityToken.totalSupply &&
-                          value(
+                          formatTokenAmount(
                             liquidityToken.balance
                               ? (liquidityToken.underlyingPoolSupplyOfUsd *
                                   liquidityToken.balance) /
@@ -279,7 +269,7 @@ export default function MoonshineBalances(props) {
                       </td>
                     )}
                     <td className="text-end">
-                      {value(
+                      {formatTokenAmount(
                         liquidityToken.underlyingPoolSupplyOfUsd
                           ? Number(
                               (liquidityToken.underlyingPoolSupplyOfUsd *
@@ -298,10 +288,7 @@ export default function MoonshineBalances(props) {
           </table>
         </div>
         <strong className="align-self-end" style={{ marginRight: 10 }}>
-          Total Liquidity Balance:{" "}
-          {value(totalLiquidityBalance, "CUSDC", {
-            showCurrency: true,
-          })}
+          Total Liquidity Balance: {formatUsdAmount(totalLiquidityBalance)}
         </strong>
       </div>
       <BuyModal

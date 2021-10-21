@@ -9,7 +9,7 @@ import { MOONSHINE_BRIDGE } from "./contracts";
 
 export default function Withdraw(props) {
   const { address } = props;
-  const [token, setToken] = useState(TOKENS['WETH'].address);
+  const [token, setToken] = useState(TOKENS["WETH"].address);
   const [value, setValue] = useState(1000n);
   const [loading, setLoading] = useState(false);
   const inputAmountRef = useRef(null);

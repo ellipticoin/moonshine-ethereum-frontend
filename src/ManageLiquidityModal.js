@@ -1,6 +1,6 @@
 import NumberFormat from "react-number-format";
 import React, { useCallback, useContext, useRef, useState } from "react";
-import { value } from "./helpers";
+import { formatUsdAmount } from "./helpers";
 import { proportionOf } from "./helpers";
 import { BASE_TOKEN_DECIMALS, TOKENS } from "./constants";
 import { MOONSHINE_AMM } from "./contracts";
@@ -142,27 +142,25 @@ export default function ManageLiquidityModal(props) {
                 <div>
                   <strong>Tokens in Pool:</strong>{" "}
                   {liquidityToken.balance &&
-                    value(
+                    tokenAmount(
                       liquidityToken.totalSupply
                         ? (liquidityToken.poolSupplyOfToken *
                             liquidityToken.balance) /
                             liquidityToken.totalSupply
                         : 0n,
                       liquidityToken.tokenAddress,
-                      { showCurrency: true }
+                      { showSymbol: true }
                     )}
                 </div>
                 <div>
                   <strong>USD in Pool:</strong>{" "}
                   {liquidityToken.totalSupply &&
-                    value(
+                    formatUsdAmount(
                       liquidityToken.balance
                         ? (liquidityToken.underlyingPoolSupplyOfUsd *
                             liquidityToken.balance) /
                             liquidityToken.totalSupply
-                        : 0n,
-                      TOKENS["CUSDC"].address,
-                      { showCurrency: true }
+                        : 0n
                     )}
                 </div>
               </div>

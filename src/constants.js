@@ -3,7 +3,7 @@ import { ethers } from "ethers";
 const {
   utils: { hexlify },
 } = ethers;
-export const PROD = true//process.env.NODE_ENV === "production";
+export const PROD = true; //process.env.NODE_ENV === "production";
 export const MOONSHINE_CHAIN_ID = hexlify(
   parseInt(process.env.REACT_APP_MOONSHINE_CHAIN_ID)
 );
