@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import ExchangeCalculator from "./ExchangeCalculator";
+import {tokenMetadata} from "./helpers.js"
 import { BASE_FACTOR, MAX_SLIPPAGE, TOKENS } from "./constants";
 import { MOONSHINE_AMM } from "./contracts";
 import AppContext from "./AppContext";
@@ -64,10 +65,10 @@ export default function BuyModal(props) {
     [apolloClient, inputAmount, outputAmount, token, setShow]
   );
 
-  return (
+  return token ? (
     <Modal show={show} setShow={setShow}>
       <div className="modal-header">
-        <h5 className="modal-title">Buy Ethereum</h5>
+        <h5 className="modal-title">Buy {tokenMetadata(token, "name")}</h5>
         <button
           type="button"
           aria-label="Close"
@@ -118,5 +119,5 @@ export default function BuyModal(props) {
         </div>
       </div>
     </Modal>
-  );
+  ): null;
 }

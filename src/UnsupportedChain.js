@@ -16,7 +16,7 @@ export default function UnlockMetaMask(props) {
         className="btn btn-lg btn-primary"
         type="submit"
       >
-        Connect To Polygon to Farm MSX and Deposit Assets
+        Connect To Polygon to Deposit Assets
       </button>
       <button
         onClick={(e) => {

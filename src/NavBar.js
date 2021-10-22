@@ -60,8 +60,9 @@ export function Chevron() {
   const { pathname } = useLocation();
   const left =
     {
-      bridge: 243,
-      farm: 180,
+      bridge: 180
+      // bridge: 243,
+      // farm: 180,
     }[pathname.slice(1)] || 104;
   const styles = useSpring({ left, position: "absolute", top: 50 });
   return (
@@ -82,12 +83,6 @@ export function NavItems(props) {
           Portfolio
         </Link>
       </li>
-      <li className="nav-item">
-        <Link className="nav-link" to="/farm">
-          Farm
-        </Link>
-      </li>
-
       <li className="nav-item">
         <Link className="nav-link" to="/bridge">
           Bridge

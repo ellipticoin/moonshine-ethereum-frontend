@@ -1,6 +1,6 @@
 import NumberFormat from "react-number-format";
 import React, { useCallback, useContext, useRef, useState } from "react";
-import { formatUsdAmount } from "./helpers";
+import { formatUsdAmount, formatTokenAmount } from "./helpers";
 import { proportionOf } from "./helpers";
 import { BASE_TOKEN_DECIMALS, TOKENS } from "./constants";
 import { MOONSHINE_AMM } from "./contracts";
@@ -142,7 +142,7 @@ export default function ManageLiquidityModal(props) {
                 <div>
                   <strong>Tokens in Pool:</strong>{" "}
                   {liquidityToken.balance &&
-                    tokenAmount(
+                    formatTokenAmount(
                       liquidityToken.totalSupply
                         ? (liquidityToken.poolSupplyOfToken *
                             liquidityToken.balance) /
