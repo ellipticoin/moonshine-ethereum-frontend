@@ -6,7 +6,7 @@ import React, {
   useState,
 } from "react";
 import ExchangeCalculator from "./ExchangeCalculator";
-import {tokenMetadata} from "./helpers.js"
+import { tokenMetadata, parseError } from "./helpers.js";
 import { BASE_FACTOR, MAX_SLIPPAGE, TOKENS } from "./constants";
 import { MOONSHINE_AMM } from "./contracts";
 import AppContext from "./AppContext";
@@ -57,8 +57,8 @@ export default function BuyModal(props) {
           include: ["tokens", "liquidityTokens"],
         });
         setShow(false);
-      } catch (e) {
-        alert(e.message);
+      } catch (error) {
+        alert(parseError(error));
         setLoading(false);
       }
     },
@@ -119,5 +119,5 @@ export default function BuyModal(props) {
         </div>
       </div>
     </Modal>
-  ): null;
+  ) : null;
 }

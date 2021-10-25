@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import ExchangeCalculator from "./ExchangeCalculator";
 import { BASE_FACTOR, MAX_SLIPPAGE, TOKENS } from "./constants";
-import { tokenMetadata } from "./helpers";
+import { tokenMetadata, parseError } from "./helpers";
 import { MOONSHINE_AMM } from "./contracts";
 import AppContext from "./AppContext";
 import TokenAmountInput from "./ETHInputs/TokenAmountInput";
@@ -56,8 +56,8 @@ export default function SellModal(props) {
           include: ["tokens", "liquidityTokens"],
         });
         setShow(false);
-      } catch (e) {
-        alert(e.message);
+      } catch (error) {
+        alert(parseError(error));
         setLoading(false);
       }
     },

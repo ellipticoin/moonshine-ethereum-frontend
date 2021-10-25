@@ -35,6 +35,22 @@ export function scaleUpTokenAmount(token, amount) {
   }
 }
 
+export function parseError(error) {
+  if (
+    error.message.match(
+      /\[ethjs-query\] while formatting outputs from RPC '(.*)'/
+    )
+  ) {
+    return JSON.parse(
+      error.message.match(
+        /\[ethjs-query\] while formatting outputs from RPC '(.*)'/
+      )[1]
+    ).value.data.message;
+  } else if (error.message) {
+    return error.message;
+  }
+}
+
 export function scaleDownTokenAmount(token, amount) {
   const decimals = tokenMetadata(token, "decimals");
   if (decimals > 6) {

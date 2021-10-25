@@ -60,7 +60,7 @@ export function Chevron() {
   const { pathname } = useLocation();
   const left =
     {
-      bridge: 180
+      bridge: 180,
       // bridge: 243,
       // farm: 180,
     }[pathname.slice(1)] || 104;
